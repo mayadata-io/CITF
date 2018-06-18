@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	. "github.com/openebs/node-disk-manager/integration_test/common"
+	. "github.com/openebs/CITF/common"
 	core_v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

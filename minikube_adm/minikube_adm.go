@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	. "github.com/openebs/node-disk-manager/integration_test/common"
+	. "github.com/openebs/CITF/common"
 )
 
 var (
