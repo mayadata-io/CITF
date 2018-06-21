@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	. "github.com/a4abhishek/CITF/common"
+	"github.com/golang/glog"
 	core_v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -340,24 +340,30 @@ func GetLog(podName, namespace string) (string, error) {
 	// We can't declare a variable somewhere which can be skipped by goto
 	var req *rest.Request
 	var readCloser io.ReadCloser
-	var err error
-	bytes := []byte{}
-	restClient, err := GetRESTClient()
+
+	buf := new(bytes.Buffer)
+	clientset, err := GetClientset()
 	if err != nil {
 		goto use_kubectl
 	}
 
-	req = restClient.Get().Namespace(namespace).Name(podName).Resource("pods").SubResource("log")
+	req = clientset.CoreV1().Pods(namespace).GetLogs(
+		podName,
+		&core_v1.PodLogOptions{},
+	)
+
 	readCloser, err = req.Stream()
+	defer readCloser.Close()
 	if err != nil {
 		goto use_kubectl
 	}
 
-	defer readCloser.Close()
-	_, err = readCloser.Read(bytes)
-	if err == nil {
-		return string(bytes), nil
+	buf.ReadFrom(readCloser)
+	if Debug {
+		fmt.Println("Log of Pod", podName, "in Namespace", namespace, "through API:")
+		fmt.Println(buf.String())
 	}
+	return buf.String(), nil
 
 use_kubectl:
 	glog.Errorf("Error while getting log with API call. Error: %+v", err)
