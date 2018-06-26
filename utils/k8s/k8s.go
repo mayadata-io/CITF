@@ -1,4 +1,4 @@
-package k8sutil
+package k8s
 
 import (
 	"bytes"
@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	. "github.com/openebs/CITF/common"
+	strutil "github.com/openebs/CITF/utils/string"
+	sysutil "github.com/openebs/CITF/utils/system"
 	core_v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,20 +22,16 @@ import (
 
 // GetAllNamespacesCoreV1NamespaceArray returns V1NamespaceList of all the namespaces.
 // :return kubernetes.client.models.v1_namespace_list.V1NamespaceList: list of namespaces.
-func GetAllNamespacesCoreV1NamespaceArray() ([]core_v1.Namespace, error) {
-	api, err := GetCoreV1API()
-	if err != nil {
-		return nil, err
-	}
-	nsList, err := api.Namespaces().List(meta_v1.ListOptions{})
+func (k8s K8S) GetAllNamespacesCoreV1NamespaceArray() ([]core_v1.Namespace, error) {
+	nsList, err := k8s.Clientset.CoreV1().Namespaces().List(meta_v1.ListOptions{})
 	return nsList.Items, err
 }
 
 // GetAllNamespacesMap returns list of the names of all the namespaces.
 // :return: map[string]core_v1.Namespace: map of namespaces where key is namespace name (str)
 // and value is corresponding k8s.io/api/core/v1.Namespace object.
-func GetAllNamespacesMap() (map[string]core_v1.Namespace, error) {
-	namespacesList, err := GetAllNamespacesCoreV1NamespaceArray()
+func (k8s K8S) GetAllNamespacesMap() (map[string]core_v1.Namespace, error) {
+	namespacesList, err := k8s.GetAllNamespacesCoreV1NamespaceArray()
 	if err != nil {
 		return nil, err
 	}
@@ -48,12 +45,7 @@ func GetAllNamespacesMap() (map[string]core_v1.Namespace, error) {
 
 // GetPod returns first Pod object which has a prefix specified in its name in the given namespace.
 // :return: kubernetes.client.models.v1_pod.V1Pod: Pod object.
-func GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
-	api, err := GetCoreV1API()
-	if err != nil {
-		return core_v1.Pod{}, err
-	}
-
+func (k8s K8S) GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 	// Try to get the pod for 10 times as sometime code reaches
 	// when pod is not even in ContainerCreating state
 	i := 0
@@ -62,18 +54,18 @@ func GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 		time.Sleep(2 * time.Second)
 
 		// List pods
-		pods, err := api.Pods(namespace).List(meta_v1.ListOptions{})
+		pods, err := k8s.Clientset.CoreV1().Pods(namespace).List(meta_v1.ListOptions{})
 		if err != nil {
 			fmt.Printf("Error occured: %+v\n", err)
 		}
 
 		// Find the Pod
-		if Debug {
+		if debug {
 			fmt.Println(strings.Repeat("*", 80))
 			fmt.Printf("Current pods in %q namespace are:\n", namespace)
 		}
 		for _, pod := range pods.Items {
-			if Debug {
+			if debug {
 				fmt.Println("Complete Pod name is:", pod.Name)
 			}
 			if strings.HasPrefix(pod.Name, podNamePrefix) {
@@ -81,7 +73,7 @@ func GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 				break
 			}
 		}
-		if Debug {
+		if debug {
 			fmt.Println(strings.Repeat("*", 80))
 		}
 		i++
@@ -94,22 +86,22 @@ func GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 }
 
 // ReloadPod reloads the state of the pod supplied and return the recent one
-func ReloadPod(pod core_v1.Pod) (core_v1.Pod, error) {
-	return GetPod(pod.Namespace, pod.Name)
+func (k8s K8S) ReloadPod(pod core_v1.Pod) (core_v1.Pod, error) {
+	return k8s.GetPod(pod.Namespace, pod.Name)
 }
 
 // GetPodPhase returns phase of the pod passed as an k8s.io/api/core/v1.PodPhase object.
 //		:param k8s.io/api/core/v1.Pod pod: pod object for which you want to get phase.
 //		:return: k8s.io/api/core/v1.PodPhase: phase of the pod.
-func GetPodPhase(pod core_v1.Pod) core_v1.PodPhase {
+func (k8s K8S) GetPodPhase(pod core_v1.Pod) core_v1.PodPhase {
 	return pod.Status.Phase
 }
 
 // GetPodPhaseStr returns phase of the pod passed in string format.
 //		:param k8s.io/api/core/v1.Pod pod: pod object for which you want to get phase.
 //		:return: str: phase of the pod.
-func GetPodPhaseStr(pod core_v1.Pod) string {
-	return string(GetPodPhase(pod))
+func (k8s K8S) GetPodPhaseStr(pod core_v1.Pod) string {
+	return string(k8s.GetPodPhase(pod))
 }
 
 // GetContainerStateInPod returns the state of the container of supplied index of the supplied Pod.
@@ -117,29 +109,29 @@ func GetPodPhaseStr(pod core_v1.Pod) string {
 //    :param timeout: maximum time duration to get the container's state.
 //                       This method does not very strictly obey this param.
 //    :return: k8s.io/api/core/v1.ContainerState: state of the container.
-func GetContainerStateInPod(pod core_v1.Pod, containerIndex int, timeout time.Duration) (core_v1.ContainerState, error) {
+func (k8s K8S) GetContainerStateInPod(pod core_v1.Pod, containerIndex int, timeout time.Duration) (core_v1.ContainerState, error) {
 	var err error
 	startTime := time.Now()
 	for reflect.DeepEqual(pod.Status.ContainerStatuses, []core_v1.ContainerStatus(nil)) && time.Since(startTime) < timeout {
 		time.Sleep(time.Second)
-		pod, err = ReloadPod(pod)
+		pod, err = k8s.ReloadPod(pod)
 		if err != nil {
 			return core_v1.ContainerState{}, err
 		}
 	}
 	if time.Since(startTime) >= timeout {
-		return core_v1.ContainerState{}, fmt.Errorf("Pod %q of namespace %q had no container till %v", pod.Name, pod.Namespace, timeout)
+		return core_v1.ContainerState{}, fmt.Errorf("pod %q of namespace %q had no container till %v", pod.Name, pod.Namespace, timeout)
 	}
 
 	for len(pod.Status.ContainerStatuses) <= containerIndex && time.Since(startTime) < timeout {
 		time.Sleep(time.Second)
-		pod, err = ReloadPod(pod)
+		pod, err = k8s.ReloadPod(pod)
 		if err != nil {
 			return core_v1.ContainerState{}, err
 		}
 	}
 	if time.Since(startTime) >= timeout {
-		return core_v1.ContainerState{}, fmt.Errorf("Pod did not had %d containers till %v", containerIndex+1, timeout)
+		return core_v1.ContainerState{}, fmt.Errorf("pod did not had %d containers till %v", containerIndex+1, timeout)
 	}
 
 	return pod.Status.ContainerStatuses[containerIndex].State, nil
@@ -147,18 +139,13 @@ func GetContainerStateInPod(pod core_v1.Pod, containerIndex int, timeout time.Du
 
 // GetNodes returns a list of all the nodes.
 //    :return: slice: list of nodes (slice of k8s.io/api/core/v1.Node array).
-func GetNodes() (nodeNames []core_v1.Node, err error) {
+func (k8s K8S) GetNodes() (nodeNames []core_v1.Node, err error) {
 	nodeNames = []core_v1.Node{}
-
-	api, err := GetCoreV1API()
-	if err != nil {
-		return
-	}
 
 	// To handle latency it tries 10 times each after 1 second of wait
 	waited := 0
 	for waited < 10 {
-		nodeList, err := api.Nodes().List(meta_v1.ListOptions{})
+		nodeList, err := k8s.Clientset.CoreV1().Nodes().List(meta_v1.ListOptions{})
 		if err != nil {
 			break
 		} else if len(nodeList.Items) == 0 {
@@ -175,10 +162,10 @@ func GetNodes() (nodeNames []core_v1.Node, err error) {
 
 // GetNodeNames returns a list of the name of all the nodes.
 //    :return: slice: list of node names (slice of string array).
-func GetNodeNames() (nodeNames []string, err error) {
+func (k8s K8S) GetNodeNames() (nodeNames []string, err error) {
 	nodeNames = []string{}
 
-	nodes, err := GetNodes()
+	nodes, err := k8s.GetNodes()
 	if err != nil {
 		return
 	}
@@ -198,10 +185,8 @@ func GetNodeNames() (nodeNames []string, err error) {
 // func LabelNode(nodeName, key, value string) error { return fmt.Errorf("Not Implemented") }
 
 // GetDaemonset returns the k8s.io/api/extensions/v1beta1.DaemonSet for the name supplied.
-func GetDaemonset(daemonsetName, daemonsetNamespace string) (v1beta1.DaemonSet, error) {
-	clientset, err := GetClientset()
-
-	daemonsetClient := clientset.ExtensionsV1beta1().DaemonSets(daemonsetNamespace)
+func (k8s K8S) GetDaemonset(daemonsetName, daemonsetNamespace string) (v1beta1.DaemonSet, error) {
+	daemonsetClient := k8s.Clientset.ExtensionsV1beta1().DaemonSets(daemonsetNamespace)
 	ds, err := daemonsetClient.Get(daemonsetName, meta_v1.GetOptions{})
 	if err != nil {
 		return v1beta1.DaemonSet{}, err
@@ -210,13 +195,11 @@ func GetDaemonset(daemonsetName, daemonsetNamespace string) (v1beta1.DaemonSet, 
 }
 
 // ApplyDSFromManifestStruct Creates a Daemonset from the manifest supplied
-func ApplyDSFromManifestStruct(manifest v1beta1.DaemonSet) (v1beta1.DaemonSet, error) {
-	clientset, err := GetClientset()
-
+func (k8s K8S) ApplyDSFromManifestStruct(manifest v1beta1.DaemonSet) (v1beta1.DaemonSet, error) {
 	if manifest.Namespace == "" {
 		manifest.Namespace = core_v1.NamespaceDefault
 	}
-	daemonsetClient := clientset.ExtensionsV1beta1().DaemonSets(manifest.Namespace)
+	daemonsetClient := k8s.Clientset.ExtensionsV1beta1().DaemonSets(manifest.Namespace)
 	ds, err := daemonsetClient.Create(&manifest)
 	if err != nil {
 		return v1beta1.DaemonSet{}, err
@@ -226,17 +209,17 @@ func ApplyDSFromManifestStruct(manifest v1beta1.DaemonSet) (v1beta1.DaemonSet, e
 
 // GetDaemonsetStructFromYamlBytes returns k8s.io/api/extensions/v1beta1.DaemonSet
 // for the yaml supplied
-func GetDaemonsetStructFromYamlBytes(yamlBytes []byte) (v1beta1.DaemonSet, error) {
+func (k8s K8S) GetDaemonsetStructFromYamlBytes(yamlBytes []byte) (v1beta1.DaemonSet, error) {
 	ds := v1beta1.DaemonSet{}
 
-	jsonBytes, err := ConvertYAMLtoJSON(yamlBytes)
+	jsonBytes, err := strutil.ConvertYAMLtoJSON(yamlBytes)
 	if err != nil {
-		return ds, fmt.Errorf("Error while Converting yaml string into Daemonset Structure. Error: %+v", err)
+		return ds, fmt.Errorf("error while Converting yaml string into Daemonset Structure. Error: %+v", err)
 	}
 
 	err = json.Unmarshal(jsonBytes, &ds)
 	if err != nil {
-		return ds, fmt.Errorf("Error occured while marshaling into Daemonset struct. Error: %+v", err)
+		return ds, fmt.Errorf("error occured while marshaling into Daemonset struct. Error: %+v", err)
 	}
 
 	return ds, nil
@@ -249,13 +232,13 @@ func GetDaemonsetStructFromYamlBytes(yamlBytes []byte) (v1beta1.DaemonSet, error
 
 // YAMLApply apply the yaml specified by the argument.
 //    :param str yamlPath: Path of the yaml file that is to be applied.
-func YAMLApply(yamlPath string) error {
+func (k8s K8S) YAMLApply(yamlPath string) error {
 	// TODO: Try using API call first. i.e. Using client-go
 
-	err := RunCommand("kubectl apply -f " + yamlPath)
+	err := sysutil.RunCommand("kubectl apply -f " + yamlPath)
 	if err != nil {
-		glog.Errorf("Error occured while applying the %s. Error: %+v", yamlPath, err)
-		return fmt.Errorf("Failed applying %s", yamlPath)
+		glog.Errorf("error occurred while applying the %s. Error: %+v", yamlPath, err)
+		return fmt.Errorf("failed applying %s", yamlPath)
 	}
 	return nil
 }
@@ -269,17 +252,8 @@ func YAMLApply(yamlPath string) error {
 //          string: Errors. (STDERR)
 //           error: If any error has occured otherwise `nil`
 // TODO: Need to fix the error (in exec.Steam) (unable to upgrade connection: you must specify at least 1 of stdin, stdout, stderr)
-func ExecToPodThroughAPI(command, podName, namespace string, stdin io.Reader) (string, string, error) {
-	config, err := GetClientConfig()
-	if err != nil {
-		return "", "", err
-	}
-	clientset, err := GetClientset()
-	if err != nil {
-		return "", "", err
-	}
-
-	req := clientset.Core().RESTClient().Post().
+func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.Reader) (string, string, error) {
+	req := k8s.Clientset.Core().RESTClient().Post().
 		Resource("pods").
 		Name(podName).
 		Namespace(namespace).
@@ -296,9 +270,9 @@ func ExecToPodThroughAPI(command, podName, namespace string, stdin io.Reader) (s
 
 	fmt.Println("Request URL: ", req.URL().String())
 
-	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	exec, err := remotecommand.NewSPDYExecutor(k8s.Config, "POST", req.URL())
 	if err != nil {
-		return "", "", fmt.Errorf("Error while creating Executor. Error: %+v", err)
+		return "", "", fmt.Errorf("error while creating Executor. Error: %+v", err)
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -309,7 +283,7 @@ func ExecToPodThroughAPI(command, podName, namespace string, stdin io.Reader) (s
 		Tty:    false,
 	})
 
-	return stdout.String(), stderr.String(), fmt.Errorf("Error in Stream. Error: %+v", err)
+	return stdout.String(), stderr.String(), fmt.Errorf("error in Stream. Error: %+v", err)
 }
 
 // ExecToPod uninterractively exec to the pod with the command specified
@@ -319,15 +293,15 @@ func ExecToPodThroughAPI(command, podName, namespace string, stdin io.Reader) (s
 // :param string namespace: namespace of the Pod.
 // :return: string: Output of the command. (STDOUT)
 //           error: If any error has occured otherwise `nil`
-func ExecToPod(command, podName, namespace string) (string, error) {
-	stdout, stderr, err := ExecToPodThroughAPI(command, podName, namespace, nil)
+func (k8s K8S) ExecToPod(command, podName, namespace string) (string, error) {
+	stdout, stderr, err := k8s.ExecToPodThroughAPI(command, podName, namespace, nil)
 	if err == nil {
 		return stdout, nil
 	}
 
-	// When Exec trhough API fails
-	glog.Errorf("Error while exec into Pod through API. Stderr: %q. Error: %+v", stderr, err)
-	return ExecCommand("kubectl -n " + namespace + " exec " + podName + " -- " + command)
+	// When Exec through API fails
+	glog.Errorf("error while exec into Pod through API. Stderr: %q. Error: %+v", stderr, err)
+	return sysutil.ExecCommand("kubectl -n " + namespace + " exec " + podName + " -- " + command)
 }
 
 // GetLog returns the log of the pod.
@@ -336,18 +310,14 @@ func ExecToPod(command, podName, namespace string) (string, error) {
 // :return: string: Log of the pod specified.
 //           error: If an error has occured, otherwise `nil`
 // TODO: Fix in API call (Error: GroupVersion is required when initializing a RESTClient)
-func GetLog(podName, namespace string) (string, error) {
+func (k8s K8S) GetLog(podName, namespace string) (string, error) {
 	// We can't declare a variable somewhere which can be skipped by goto
 	var req *rest.Request
 	var readCloser io.ReadCloser
+	var err error
 
 	buf := new(bytes.Buffer)
-	clientset, err := GetClientset()
-	if err != nil {
-		goto use_kubectl
-	}
-
-	req = clientset.CoreV1().Pods(namespace).GetLogs(
+	req = k8s.Clientset.CoreV1().Pods(namespace).GetLogs(
 		podName,
 		&core_v1.PodLogOptions{},
 	)
@@ -359,7 +329,7 @@ func GetLog(podName, namespace string) (string, error) {
 	}
 
 	buf.ReadFrom(readCloser)
-	if Debug {
+	if debug {
 		fmt.Println("Log of Pod", podName, "in Namespace", namespace, "through API:")
 		fmt.Println(buf.String())
 	}
@@ -368,5 +338,5 @@ func GetLog(podName, namespace string) (string, error) {
 use_kubectl:
 	glog.Errorf("Error while getting log with API call. Error: %+v", err)
 
-	return ExecCommand("kubectl -n " + namespace + " logs " + podName)
+	return sysutil.ExecCommand("kubectl -n " + namespace + " logs " + podName)
 }

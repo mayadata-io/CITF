@@ -1,18 +1,60 @@
-package common
+package k8s
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+
+	// . "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	api_core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
-	typed_core_v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	// Install special auth plugins like GCP Plugins
 	// _ "k8s.io/client-go/plugin/pkg/client/auth"
 )
+
+// debug governs whether to print verbose logs or not
+// It can be set by Environment Variable `CITF_VERBOSE_LOG``
+var debug bool
+
+func init() {
+	debugEnv := os.Getenv("CITF_VERBOSE_LOG")
+
+	if strings.ToLower(debugEnv) == "true" {
+		debug = true
+	} else {
+		debug = false
+	}
+}
+
+// K8S is a struct which will be the driver for all the methods related to kubernetes
+type K8S struct {
+	Config     *rest.Config
+	Clientset  *kubernetes.Clientset
+	RESTClient *rest.RESTClient
+}
+
+// NewK8S returns K8S struct
+func NewK8S() K8S {
+	config, err := GetClientConfig()
+	Expect(err).NotTo(HaveOccurred())
+
+	clientset, err := GetClientsetFromConfig(config)
+	Expect(err).NotTo(HaveOccurred())
+
+	restClient, err := rest.RESTClientFor(config)
+	Expect(err).NotTo(HaveOccurred())
+
+	return K8S{
+		Config:     config,
+		Clientset:  clientset,
+		RESTClient: restClient,
+	}
+}
 
 // Different phases of Namespace
 
@@ -41,42 +83,6 @@ var PodGoodStates = []string{"Running"}
 // PodBadStates is an array of the states of the Pod which are considered to be bad
 var PodBadStates = []string{"CrashLoopBackOff", "ImagePullBackOff", "RunContainerError", "ContainerCannotRun"}
 
-// IsNSinGoodPhase checks if supplied namespace is in good phase or not
-// by matching phase of supplied namespace with pre-identified Good phase list (NsGoodPhases)
-func IsNSinGoodPhase(namespace api_core_v1.Namespace) bool {
-	for _, phase := range NsGoodPhases {
-		if phase == namespace.Status.Phase {
-			return true
-		}
-	}
-
-	return false
-}
-
-// IsPodStateWait checks if supplied pod state is wait state or not
-// by matching state of supplied pod state with pre-identified Wait states list (PodWaitStates)
-func IsPodStateWait(podState string) bool {
-	for _, state := range PodWaitStates {
-		if state == podState {
-			return true
-		}
-	}
-
-	return false
-}
-
-// IsPodStateGood checks if supplied pod state is good or not
-// by matching state of supplied pod state with pre-identified Good states list (PodGoodStates)
-func IsPodStateGood(podState string) bool {
-	for _, state := range PodGoodStates {
-		if state == podState {
-			return true
-		}
-	}
-
-	return false
-}
-
 // GetClientConfig first tries to get a config object which uses the service account kubernetes gives to pods,
 // if it is called from a process running in a kubernetes environment.
 // Otherwise, it tries to build config from a default kubeconfig filepath if it fails, it fallback to the default config.
@@ -84,7 +90,7 @@ func IsPodStateGood(podState string) bool {
 func GetClientConfig() (*rest.Config, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		if Debug {
+		if debug {
 			fmt.Printf("Unable to create config. Error: %+v\n", err)
 		}
 		err1 := err
@@ -99,6 +105,17 @@ func GetClientConfig() (*rest.Config, error) {
 	return config, nil
 }
 
+// GetClientsetFromConfig takes REST config and Create a clientset based on that and return that clientset
+func GetClientsetFromConfig(config *rest.Config) (*kubernetes.Clientset, error) {
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		err = fmt.Errorf("failed creating clientset. Error: %+v", err)
+		return nil, err
+	}
+
+	return clientset, nil
+}
+
 // GetClientset first tries to get a config object which uses the service account kubernetes gives to pods,
 // if it is called from a process running in a kubernetes environment.
 // Otherwise, it tries to build config from a default kubeconfig filepath if it fails, it fallback to the default config.
@@ -109,13 +126,7 @@ func GetClientset() (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		err = fmt.Errorf("Failed creating clientset. Error: %+v", err)
-		return nil, err
-	}
-
-	return clientset, nil
+	return GetClientsetFromConfig(config)
 }
 
 // GetRESTClient first tries to get a config object which uses the service account kubernetes gives to pods,
@@ -129,16 +140,4 @@ func GetRESTClient() (*rest.RESTClient, error) {
 	}
 
 	return rest.RESTClientFor(config)
-}
-
-// GetCoreV1API returns a k8s.io/client-go/kubernetes/typed/core/v1.CoreV1Interface object
-// and nil as error in case of no error occures when it tries to make a clientset
-// otherwise it returns nil for k8s.io/client-go/kubernetes/typed/core/v1.CoreV1Interface
-// and the error occured
-func GetCoreV1API() (typed_core_v1.CoreV1Interface, error) {
-	clientset, err := GetClientset()
-	if err != nil {
-		return nil, err
-	}
-	return clientset.CoreV1(), nil
 }

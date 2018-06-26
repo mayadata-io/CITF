@@ -1,9 +1,10 @@
-package common
+package string
 
 import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -11,25 +12,28 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// AllUnicodeWhiteSpaces is a string which has all the white space characters in it.
-// We can use it in strings.Trim, strings.Split etc.
-const AllUnicodeWhiteSpaces = "\t\n\v\f\r \x85\xA0"
+// debug governs whether to print verbose logs or not
+// It can be set by Environment Variable `CITF_VERBOSE_LOG``
+var debug bool
 
-// TrimWhitespaces takes a string then it trims all the whitespace from the same and return
-func TrimWhitespaces(str string) string {
-	return strings.Trim(str, AllUnicodeWhiteSpaces)
-	// Or we can effectively write the following too
-	// return strings.TrimFunc(str, unicode.IsSpace)
+func init() {
+	debugEnv := os.Getenv("CITF_VERBOSE_LOG")
+
+	if strings.ToLower(debugEnv) == "true" {
+		debug = true
+	} else {
+		debug = false
+	}
 }
 
 // PrettyString returns the prettified string of the interface supplied. (If it can)
 func PrettyString(in interface{}) string {
 	jsonStr, err := json.MarshalIndent(in, "", "    ")
 	if err != nil {
-		if Debug {
-			err := fmt.Errorf("Unable to marshal, Error: %+v", err)
+		if debug {
+			err := fmt.Errorf("unable to marshal, Error: %+v", err)
 			if err != nil {
-				fmt.Printf("Unable to marshal, Error: %+v\n", err)
+				fmt.Printf("unable to marshal, Error: %+v\n", err)
 			}
 		}
 		return fmt.Sprintf("%+v", in)
