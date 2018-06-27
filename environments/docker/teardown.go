@@ -3,23 +3,25 @@ package docker
 import (
 	"fmt"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
-// TearDown removes all the docker containers present on the machine
+// Teardown stops all the docker containers present on the machine
 func (docker Docker) Teardown() error {
-	// CAUTION: This function call deletes all docker containers
-	containersStr, err := execCommand("docker ps -aq")
+	// CAUTION: This function call stops all docker containers
+	containersStr, err := execCommand("docker ps -q")
 	if err != nil {
-		return err
+		return fmt.Errorf("error while getting container id. Error: %+v", err)
 	}
 	if containersStr != "" {
 		containers := strings.Fields(containersStr)
 		for _, container := range containers {
-			err = runCommand("docker rm -f " + container)
+			err = runCommand("docker stop -f " + container)
 			if err != nil {
-				fmt.Printf("Error occured while deleting docker container: %s. Error: %+v\n", container, err)
+				glog.Errorf("error occured while stopping docker container: %s. Error: %+v\n", container, err)
 			} else {
-				fmt.Printf("Deleted container: %s\n", container)
+				fmt.Printf("Stopped container: %s\n", container)
 			}
 		}
 	}

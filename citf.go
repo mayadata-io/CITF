@@ -3,7 +3,7 @@ package citf
 import (
 	"fmt"
 
-	. "github.com/onsi/gomega"
+	"github.com/golang/glog"
 	"github.com/openebs/CITF/config"
 	"github.com/openebs/CITF/environments"
 	"github.com/openebs/CITF/environments/docker"
@@ -19,24 +19,31 @@ type CITF struct {
 }
 
 // NewCITF returns CITF struct. One need this in order to use any functionality of this framework.
-func NewCITF(confFilePath string) CITF {
+func NewCITF(confFilePath string) (CITF, error) {
 	var environment environments.Environment
 	if err := config.LoadConf(confFilePath); err != nil {
 		// Log this here
-		fmt.Fprintf(GinkgoWriter, "error loading config file. Error: %+v", err)
+		// Here, we don't want to return fatal error since we want to continue
+		// executing the function with default configuration even if it fails
+		glog.Errorf("error loading config file. Error: %+v", err)
 	}
 
 	switch config.Environment() {
 	case "minikube":
 		environment = minikube.NewMinikube()
 	default:
-		// Exit with Error using Gomega
-		Expect("").ToNot(BeEmpty())
+		// Exit with Error
+		return CITF, fmt.Errorf("platform: %q is not suppported by CITF", config.Environment())
+	}
+
+	k8sInstance, err := k8s.NewK8S()
+	if err != nil {
+		return CITF{}, err
 	}
 
 	return CITF{
-		K8S:         k8s.NewK8S(),
+		K8S:         k8sInstance,
 		Environment: environment,
 		Docker:      docker.NewDocker(),
-	}
+	}, nil
 }

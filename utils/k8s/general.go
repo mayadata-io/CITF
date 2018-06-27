@@ -6,9 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	// . "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	api_core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -39,21 +36,25 @@ type K8S struct {
 }
 
 // NewK8S returns K8S struct
-func NewK8S() K8S {
+func NewK8S() (K8S, error) {
 	config, err := GetClientConfig()
-	Expect(err).NotTo(HaveOccurred())
-
+	if err != nil {
+		return K8S{}, err
+	}
 	clientset, err := GetClientsetFromConfig(config)
-	Expect(err).NotTo(HaveOccurred())
-
+	if err != nil {
+		return K8S{}, err
+	}
 	restClient, err := rest.RESTClientFor(config)
-	Expect(err).NotTo(HaveOccurred())
+	if err != nil {
+		return K8S{}, err
+	}
 
 	return K8S{
 		Config:     config,
 		Clientset:  clientset,
 		RESTClient: restClient,
-	}
+	}, nil
 }
 
 // Different phases of Namespace

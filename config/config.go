@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"os"
@@ -33,12 +34,12 @@ func LoadConf(confFilePath string) error {
 
 	yamlBytes, err := ioutil.ReadFile(confFilePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading file: %q. Error: %+v", confFilePath, err)
 	}
 
 	err = yaml.Unmarshal(yamlBytes, Conf)
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing file: %q. Error: %+v", confFilePath, err)
 	}
 	return nil
 }
