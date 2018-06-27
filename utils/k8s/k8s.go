@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"errors"
 )
 
 // GetAllNamespacesCoreV1NamespaceArray returns V1NamespaceList of all the namespaces.
@@ -79,7 +80,7 @@ func (k8s K8S) GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 		i++
 	}
 	if reflect.DeepEqual(thePod, core_v1.Pod{}) {
-		glog.Fatal("Failed getting NDM-Pod in given time.")
+		return thePod, errors.New("failed getting NDM-Pod in given time")
 	}
 
 	return thePod, nil

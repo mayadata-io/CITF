@@ -45,12 +45,9 @@ func PrettyString(in interface{}) string {
 // a character then it replaces that with its value.
 // If any error occured while resolving it leaves that part as it is.
 // e.g. "\\x20" in a string will be replaced with value of "\x20" i.e. space
-func ReplaceHexCodesWithValue(s string) string {
+func ReplaceHexCodesWithValue(s string) (string, error) {
 	regexString := "\\\\[xX][0-9a-fA-F]{2}"
-	pattern, err := regexp.Compile(regexString)
-	if err != nil {
-		glog.Fatalf("Error while compiling regex: %q. Error: %+v", regexString, err)
-	}
+	pattern, _ := regexp.Compile(regexString) // This should be covered in unit test
 
 	return pattern.ReplaceAllStringFunc(s, func(s string) string {
 		bytes, err := hex.DecodeString(s[2:])
@@ -59,7 +56,7 @@ func ReplaceHexCodesWithValue(s string) string {
 			return s
 		}
 		return string(bytes)
-	})
+	}), nil
 }
 
 // ConvertMapI2MapS walks the given dynamic object recursively, and

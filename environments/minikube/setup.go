@@ -3,8 +3,6 @@ package minikube
 import (
 	"fmt"
 	"os"
-
-	"github.com/golang/glog"
 )
 
 // runPostStartCommandsForMinikube runs the commands required when run minikube as --vm-driver=none
@@ -33,12 +31,12 @@ func (minikube Minikube) runPostStartCommandsForMinikubeNoneDriver() {
 }
 
 // StartMinikube method starts minikube with `--vm-driver=none` option.
-func (minikube Minikube) StartMinikube() {
+func (minikube Minikube) StartMinikube() error {
 	err := runCommand("minikube start --vm-driver=none")
 	// We can also use following:
 	// "minikube start --vm-driver=none --feature-gates=MountPropagation=true --cpus=1 --memory=1024 --v=3 --alsologtostderr"
 	if err != nil {
-		glog.Fatal(err)
+		return fmt.Errorf("error occurred while starting minikube. Error: %+v", err)
 	}
 
 	envChangeMinikubeNoneUser := os.Getenv("CHANGE_MINIKUBE_NONE_USER")
@@ -50,7 +48,7 @@ func (minikube Minikube) StartMinikube() {
 		if debug {
 			fmt.Println("Returning from setup.")
 		}
-		return
+		return nil
 	}
 
 	minikube.waitForDotKubeDirToBeCreated()
@@ -58,13 +56,15 @@ func (minikube Minikube) StartMinikube() {
 	minikube.waitForDotMinikubeDirToBeCreated()
 
 	minikube.runPostStartCommandsForMinikubeNoneDriver()
+
+	return nil
 }
 
 // Setup checks if a teardown is required before minikube start
 // if so it does that and then start the minikube.
 // It does nothing when minikube is already running.
 // it prints status too.
-func (minikube Minikube) Setup() {
+func (minikube Minikube) Setup() error {
 	minikubeStatus, err := minikube.Status()
 
 	if debug {
@@ -102,14 +102,14 @@ func (minikube Minikube) Setup() {
 	if teardownRequired {
 		err = minikube.Teardown()
 		if err != nil {
-			fmt.Printf("Error while deleting machine. Error: %+v\n", err)
-		} else {
-			fmt.Println("minikube deleted.")
+			return fmt.Errorf("error occurred while deleting existing machine. Error: %+v", err)
 		}
+		fmt.Println("minikube deleted.")
 	}
 
 	// If we figured out that a start is needed then do so
 	if startRequired {
 		minikube.StartMinikube()
 	}
+	return nil
 }
