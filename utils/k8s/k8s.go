@@ -9,7 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"errors"
+
 	"github.com/golang/glog"
+	"github.com/openebs/CITF/common"
 	strutil "github.com/openebs/CITF/utils/string"
 	sysutil "github.com/openebs/CITF/utils/system"
 	core_v1 "k8s.io/api/core/v1"
@@ -18,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
-	"errors"
 )
 
 // GetAllNamespacesCoreV1NamespaceArray returns V1NamespaceList of all the namespaces.
@@ -61,12 +63,12 @@ func (k8s K8S) GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 		}
 
 		// Find the Pod
-		if debug {
+		if common.DebugEnabled {
 			fmt.Println(strings.Repeat("*", 80))
 			fmt.Printf("Current pods in %q namespace are:\n", namespace)
 		}
 		for _, pod := range pods.Items {
-			if debug {
+			if common.DebugEnabled {
 				fmt.Println("Complete Pod name is:", pod.Name)
 			}
 			if strings.HasPrefix(pod.Name, podNamePrefix) {
@@ -74,7 +76,7 @@ func (k8s K8S) GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 				break
 			}
 		}
-		if debug {
+		if common.DebugEnabled {
 			fmt.Println(strings.Repeat("*", 80))
 		}
 		i++
@@ -330,7 +332,7 @@ func (k8s K8S) GetLog(podName, namespace string) (string, error) {
 	}
 
 	buf.ReadFrom(readCloser)
-	if debug {
+	if common.DebugEnabled {
 		fmt.Println("Log of Pod", podName, "in Namespace", namespace, "through API:")
 		fmt.Println(buf.String())
 	}
