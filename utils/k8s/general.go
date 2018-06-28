@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
+	"github.com/openebs/CITF/common"
 	api_core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -14,25 +14,10 @@ import (
 	// _ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-// debug governs whether to print verbose logs or not
-// It can be set by Environment Variable `CITF_VERBOSE_LOG``
-var debug bool
-
-func init() {
-	debugEnv := os.Getenv("CITF_VERBOSE_LOG")
-
-	if strings.ToLower(debugEnv) == "true" {
-		debug = true
-	} else {
-		debug = false
-	}
-}
-
 // K8S is a struct which will be the driver for all the methods related to kubernetes
 type K8S struct {
-	Config     *rest.Config
-	Clientset  *kubernetes.Clientset
-	RESTClient *rest.RESTClient
+	Config    *rest.Config
+	Clientset *kubernetes.Clientset
 }
 
 // NewK8S returns K8S struct
@@ -45,15 +30,10 @@ func NewK8S() (K8S, error) {
 	if err != nil {
 		return K8S{}, err
 	}
-	restClient, err := rest.RESTClientFor(config)
-	if err != nil {
-		return K8S{}, err
-	}
 
 	return K8S{
-		Config:     config,
-		Clientset:  clientset,
-		RESTClient: restClient,
+		Config:    config,
+		Clientset: clientset,
 	}, nil
 }
 
@@ -91,7 +71,7 @@ var PodBadStates = []string{"CrashLoopBackOff", "ImagePullBackOff", "RunContaine
 func GetClientConfig() (*rest.Config, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		if debug {
+		if common.DebugEnabled {
 			fmt.Printf("Unable to create config. Error: %+v\n", err)
 		}
 		err1 := err

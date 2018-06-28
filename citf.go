@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/golang/glog"
+	"github.com/openebs/CITF/common"
 	"github.com/openebs/CITF/config"
 	"github.com/openebs/CITF/environments"
 	"github.com/openebs/CITF/environments/docker"
@@ -13,9 +14,10 @@ import (
 
 // CITF is a struct which will be the driver for all functionalities of this framework
 type CITF struct {
-	Environment environments.Environment
-	K8S         k8s.K8S
-	Docker      docker.Docker
+	Environment  environments.Environment
+	K8S          k8s.K8S
+	Docker       docker.Docker
+	DebugEnabled bool
 }
 
 // NewCITF returns CITF struct. One need this in order to use any functionality of this framework.
@@ -33,7 +35,7 @@ func NewCITF(confFilePath string) (CITF, error) {
 		environment = minikube.NewMinikube()
 	default:
 		// Exit with Error
-		return CITF, fmt.Errorf("platform: %q is not suppported by CITF", config.Environment())
+		return CITF{}, fmt.Errorf("platform: %q is not suppported by CITF", config.Environment())
 	}
 
 	k8sInstance, err := k8s.NewK8S()
@@ -42,8 +44,9 @@ func NewCITF(confFilePath string) (CITF, error) {
 	}
 
 	return CITF{
-		K8S:         k8sInstance,
-		Environment: environment,
-		Docker:      docker.NewDocker(),
+		K8S:          k8sInstance,
+		Environment:  environment,
+		Docker:       docker.NewDocker(),
+		DebugEnabled: common.DebugEnabled,
 	}, nil
 }

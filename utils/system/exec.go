@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+
+	"github.com/openebs/CITF/common"
 )
 
 // ExecCommand executes the command supplied and return the output as well as error
@@ -15,7 +17,7 @@ import (
 // Also don't use quotes in command or argument because that quote will be considerd
 // part of the command
 func ExecCommand(cmd string) (string, error) {
-	if debug {
+	if common.DebugEnabled {
 		fmt.Printf("Executing command: %q\n", cmd)
 	}
 	// splitting head => g++ parts => rest of the command
@@ -111,7 +113,7 @@ func ExecCommandWithGivenStdinWithSudo(cmd, stdin string) (string, error) {
 // ExecPipeTwoCommandsArray takes two commands in its parameter. It runs first command
 // and feed its output to second command as input
 func ExecPipeTwoCommandsArray(cmd1, cmd2 []string) (string, error) {
-	if debug {
+	if common.DebugEnabled {
 		fmt.Printf("Executing command: %q\n", strings.Join(cmd1, " ")+" | "+strings.Join(cmd2, " "))
 	}
 	c1 := exec.Command(cmd1[0], cmd1[1:]...)

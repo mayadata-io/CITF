@@ -3,6 +3,8 @@ package minikube
 import (
 	"fmt"
 	"os"
+
+	"github.com/openebs/CITF/common"
 )
 
 // runPostStartCommandsForMinikube runs the commands required when run minikube as --vm-driver=none
@@ -40,12 +42,12 @@ func (minikube Minikube) StartMinikube() error {
 	}
 
 	envChangeMinikubeNoneUser := os.Getenv("CHANGE_MINIKUBE_NONE_USER")
-	if debug {
+	if common.DebugEnabled {
 		fmt.Printf("Environ CHANGE_MINIKUBE_NONE_USER = %q\n", envChangeMinikubeNoneUser)
 	}
 	if envChangeMinikubeNoneUser == "true" {
 		// Below commands shall automatically run in this case.
-		if debug {
+		if common.DebugEnabled {
 			fmt.Println("Returning from setup.")
 		}
 		return nil
@@ -67,7 +69,7 @@ func (minikube Minikube) StartMinikube() error {
 func (minikube Minikube) Setup() error {
 	minikubeStatus, err := minikube.Status()
 
-	if debug {
+	if common.DebugEnabled {
 		if err != nil {
 			fmt.Printf("Error occured while checking minikube status. Error: %+v\n", err)
 		} else {

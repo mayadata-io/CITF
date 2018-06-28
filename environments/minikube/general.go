@@ -14,20 +14,7 @@ var (
 	runCommand  = sysutil.RunCommandWithSudo
 )
 
-// debug governs whether to print verbose logs or not
-// It can be set by Environment Variable `CITF_VERBOSE_LOG``
-var debug bool
-
 func init() {
-	// Debug-Environment detection
-	debugEnv := os.Getenv("CITF_VERBOSE_LOG")
-
-	if strings.ToLower(debugEnv) == "true" {
-		debug = true
-	} else {
-		debug = false
-	}
-
 	// `sudo` use detection
 	useSudoEnv := strings.ToLower(strings.TrimSpace(os.Getenv("USE_SUDO")))
 	if useSudoEnv == "true" { // If it is mentioned in the environment variable to use sudo

@@ -4,33 +4,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"regexp"
-	"strings"
 
 	"github.com/golang/glog"
+	"github.com/openebs/CITF/common"
 	"gopkg.in/yaml.v2"
 )
-
-// debug governs whether to print verbose logs or not
-// It can be set by Environment Variable `CITF_VERBOSE_LOG``
-var debug bool
-
-func init() {
-	debugEnv := os.Getenv("CITF_VERBOSE_LOG")
-
-	if strings.ToLower(debugEnv) == "true" {
-		debug = true
-	} else {
-		debug = false
-	}
-}
 
 // PrettyString returns the prettified string of the interface supplied. (If it can)
 func PrettyString(in interface{}) string {
 	jsonStr, err := json.MarshalIndent(in, "", "    ")
 	if err != nil {
-		if debug {
+		if common.DebugEnabled {
 			err := fmt.Errorf("unable to marshal, Error: %+v", err)
 			if err != nil {
 				fmt.Printf("unable to marshal, Error: %+v\n", err)
