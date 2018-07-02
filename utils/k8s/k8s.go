@@ -72,7 +72,7 @@ func (k8s K8S) GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 		// List pods
 		pods, err := k8s.Clientset.CoreV1().Pods(namespace).List(meta_v1.ListOptions{})
 		if err != nil {
-			fmt.Printf("Error occured: %+v\n", err)
+			fmt.Printf("Error occurred: %+v\n", err)
 		}
 
 		// Find the Pod
@@ -197,7 +197,7 @@ func (k8s K8S) GetNodeNames() (nodeNames []string, err error) {
 //    :param string node_name: Name of the node.
 //    :param string key: Key of the label.
 //    :param string value: Value of the label.
-//    :return: error: if any error occured or nil otherwise.
+//    :return: error: if any error occurred or nil otherwise.
 // func LabelNode(nodeName, key, value string) error { return fmt.Errorf("Not Implemented") }
 
 // GetDaemonset returns the k8s.io/api/extensions/v1beta1.DaemonSet for the name supplied.
@@ -235,7 +235,7 @@ func (k8s K8S) GetDaemonsetStructFromYamlBytes(yamlBytes []byte) (v1beta1.Daemon
 
 	err = json.Unmarshal(jsonBytes, &ds)
 	if err != nil {
-		return ds, fmt.Errorf("error occured while marshaling into Daemonset struct. Error: %+v", err)
+		return ds, fmt.Errorf("error occurred while marshaling into Daemonset struct. Error: %+v", err)
 	}
 
 	return ds, nil
@@ -266,7 +266,7 @@ func (k8s K8S) YAMLApply(yamlPath string) error {
 // :param io.Reader stdin: Standerd Input if necessary, otherwise `nil`
 // :return: string: Output of the command. (STDOUT)
 //          string: Errors. (STDERR)
-//           error: If any error has occured otherwise `nil`
+//           error: If any error has occurred otherwise `nil`
 // TODO: Need to fix the error (in exec.Steam) (unable to upgrade connection: you must specify at least 1 of stdin, stdout, stderr)
 func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.Reader) (string, string, error) {
 	req := k8s.Clientset.Core().RESTClient().Post().
@@ -308,7 +308,7 @@ func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.
 // :param string pod_name: Pod name
 // :param string namespace: namespace of the Pod.
 // :return: string: Output of the command. (STDOUT)
-//           error: If any error has occured otherwise `nil`
+//           error: If any error has occurred otherwise `nil`
 func (k8s K8S) ExecToPod(command, podName, namespace string) (string, error) {
 	stdout, stderr, err := k8s.ExecToPodThroughAPI(command, podName, namespace, nil)
 	if err == nil {
@@ -324,7 +324,7 @@ func (k8s K8S) ExecToPod(command, podName, namespace string) (string, error) {
 // :param string pod_name: Name of the pod. (required)
 // :param string namespace: Namespace of the pod. (required)
 // :return: string: Log of the pod specified.
-//           error: If an error has occured, otherwise `nil`
+//           error: If an error has occurred, otherwise `nil`
 // TODO: Fix in API call (Error: GroupVersion is required when initializing a RESTClient)
 func (k8s K8S) GetLog(podName, namespace string) (string, error) {
 	// We can't declare a variable somewhere which can be skipped by goto

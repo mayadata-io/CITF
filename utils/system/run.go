@@ -26,7 +26,7 @@ import (
 // RunCommand executes the command supplied and return the error
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func RunCommand(cmd string) error {
 	if common.DebugEnabled {
@@ -45,7 +45,7 @@ func RunCommand(cmd string) error {
 // RunCommandWithSudo executes the command supplied and return the error
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func RunCommandWithSudo(cmd string) error {
 	return RunCommand("sudo " + cmd)
@@ -72,7 +72,7 @@ func runCommandArrayWithGivenStdin(head string, parts []string, stdin string) er
 
 // RunCommandArrayWithGivenStdin runs the command supplied
 // then feed the supplied stdin to commands stdin then return the error
-// don't use quotes in command or argument because that quote will be considerd
+// don't use quotes in command or argument because that quote will be considered
 // part of the command
 func RunCommandArrayWithGivenStdin(cmd []string, stdin string) error {
 	return runCommandArrayWithGivenStdin(cmd[0], cmd[1:], stdin)
@@ -82,7 +82,7 @@ func RunCommandArrayWithGivenStdin(cmd []string, stdin string) error {
 // then feed the supplied stdin to commands stdin then return error
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func RunCommandWithGivenStdin(cmd, stdin string) error {
 	return RunCommandArrayWithGivenStdin(strings.Fields(cmd), stdin)
@@ -90,7 +90,7 @@ func RunCommandWithGivenStdin(cmd, stdin string) error {
 
 // RunCommandArrayWithGivenStdinWithSudo runs the command supplied with `sudo`
 // then feed the supplied stdin to commands stdin then return the error
-// don't use quotes in command or argument because that quote will be considerd
+// don't use quotes in command or argument because that quote will be considered
 // part of the command
 func RunCommandArrayWithGivenStdinWithSudo(cmd []string, stdin string) error {
 	return runCommandArrayWithGivenStdin("sudo", cmd, stdin)
@@ -100,7 +100,7 @@ func RunCommandArrayWithGivenStdinWithSudo(cmd []string, stdin string) error {
 // then feed the supplied stdin to commands stdin then return the error
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func RunCommandWithGivenStdinWithSudo(cmd, stdin string) error {
 	return RunCommandArrayWithGivenStdinWithSudo(strings.Fields(cmd), stdin)

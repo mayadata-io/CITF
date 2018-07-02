@@ -26,9 +26,5 @@ func init() {
 	// Debug-Environment detection
 	debugEnv := os.Getenv("CITF_VERBOSE_LOG")
 
-	if strings.ToLower(debugEnv) == "true" {
-		DebugEnabled = true
-	} else {
-		DebugEnabled = false
-	}
+	DebugEnabled = strings.ToLower(debugEnv) == "true"
 }

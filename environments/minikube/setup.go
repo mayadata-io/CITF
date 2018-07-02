@@ -84,7 +84,7 @@ func (minikube Minikube) Setup() error {
 
 	if common.DebugEnabled {
 		if err != nil {
-			fmt.Printf("Error occured while checking minikube status. Error: %+v\n", err)
+			fmt.Printf("Error occurred while checking minikube status. Error: %+v\n", err)
 		} else {
 			fmt.Printf("minikube status: %q\n", minikubeStatus)
 		}

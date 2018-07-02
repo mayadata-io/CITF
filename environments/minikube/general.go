@@ -43,6 +43,7 @@ func init() {
 }
 
 // Minikube is a struct which will be the driver for all the methods related to minikube
+// Minikube implements github.com/openebs/CITF/Enviromnent interface
 type Minikube struct {
 	// Timeout is the timeout that will be used throughout the minikube package
 	// for timeout in any operation if requires.

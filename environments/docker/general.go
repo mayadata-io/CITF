@@ -42,6 +42,7 @@ func init() {
 }
 
 // Docker is a struct which will be the driver for all the methods related to docker
+// Docker implements github.com/openebs/CITF/Enviromnent interface
 type Docker struct{}
 
 // NewDocker returns Docker struct
