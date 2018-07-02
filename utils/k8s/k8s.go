@@ -267,7 +267,6 @@ func (k8s K8S) YAMLApply(yamlPath string) error {
 // :return: string: Output of the command. (STDOUT)
 //          string: Errors. (STDERR)
 //           error: If any error has occurred otherwise `nil`
-// TODO: Need to fix the error (in exec.Steam) (unable to upgrade connection: you must specify at least 1 of stdin, stdout, stderr)
 func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.Reader) (string, string, error) {
 	req := k8s.Clientset.Core().RESTClient().Post().
 		Resource("pods").
@@ -275,6 +274,10 @@ func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.
 		Namespace(namespace).
 		SubResource("exec")
 	scheme := runtime.NewScheme()
+	if err := core_v1.AddToScheme(scheme); err != nil {
+		return "", "", fmt.Errorf("error adding to scheme: %v", err)
+	}
+
 	parameterCodec := runtime.NewParameterCodec(scheme)
 	req.VersionedParams(&core_v1.PodExecOptions{
 		Command: strings.Fields(command),
@@ -284,11 +287,13 @@ func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.
 		TTY:     false,
 	}, parameterCodec)
 
-	fmt.Println("Request URL: ", req.URL().String())
+	if common.DebugEnabled {
+		fmt.Println("Request URL: ", req.URL().String())
+	}
 
 	exec, err := remotecommand.NewSPDYExecutor(k8s.Config, "POST", req.URL())
 	if err != nil {
-		return "", "", fmt.Errorf("error while creating Executor. Error: %+v", err)
+		return "", "", fmt.Errorf("error while creating Executor: %v", err)
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -298,8 +303,11 @@ func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.
 		Stderr: &stderr,
 		Tty:    false,
 	})
+	if err != nil {
+		return "", "", fmt.Errorf("error in Stream: %v", err)
+	}
 
-	return stdout.String(), stderr.String(), fmt.Errorf("error in Stream. Error: %+v", err)
+	return stdout.String(), stderr.String(), nil
 }
 
 // ExecToPod uninterractively exec to the pod with the command specified
