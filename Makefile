@@ -2,8 +2,6 @@
 
 build: vet fmt golint
 
-PACKAGES = $(go list ./... | grep -v '/vendor/')
-
 # Tools required for different make targets or for development purposes
 EXTERNAL_TOOLS = \
 	github.com/fzipp/gocyclo \
@@ -26,7 +24,7 @@ gocyclo:
 # Target for running go test
 test: vet fmt
 	@echo "--> Running go test";
-	@go test -v $(PACKAGES)
+	$(PWD)/test.sh
 
 # Bootstrap the build by downloading additional tools
 bootstrap:
