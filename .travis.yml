@@ -1,0 +1,18 @@
+language: go
+
+go:
+  - 1.9.2
+
+sudo: required
+
+install:
+  - make bootstrap
+  - if [ "$TRAVIS_BUILD_DIR" != "$GOPATH/src/github.com/openebs/CITF" ]; then
+      mkdir -p $GOPATH/src/github.com/openebs/;
+      mv $TRAVIS_BUILD_DIR $GOPATH/src/github.com/openebs;
+      cd $GOPATH/src/github.com/openebs/CITF;
+    fi
+
+script:
+  - make
+  - make gocyclo
