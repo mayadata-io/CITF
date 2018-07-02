@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/openebs/CITF.svg?branch=master)](https://travis-ci.org/openebs/CITF)
 [![Go Report](https://goreportcard.com/badge/github.com/openebs/CITF)](https://goreportcard.com/report/github.com/openebs/CITF)
+[![codecov](https://codecov.io/gh/openebs/CITF/branch/master/graph/badge.svg)](https://codecov.io/gh/openebs/CITF)
 [![GoDoc](https://godoc.org/github.com/openebs/CITF?status.svg)](https://godoc.org/github.com/openebs/CITF)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/openebs/CITF/blob/master/LICENSE)
 
