@@ -29,19 +29,17 @@ func PrettyString(in interface{}) string {
 	jsonStr, err := json.MarshalIndent(in, "", "    ")
 	if err != nil {
 		if common.DebugEnabled {
-			err := fmt.Errorf("unable to marshal, Error: %+v", err)
-			if err != nil {
-				fmt.Printf("unable to marshal, Error: %+v\n", err)
-			}
+			fmt.Printf("unable to marshal, Error: %+v\n", err)
 		}
 		return fmt.Sprintf("%+v", in)
 	}
+
 	return string(jsonStr)
 }
 
 // ReplaceHexCodesWithValue finds any string slice which is equivalent to hexadecimal value of
 // a character then it replaces that with its value.
-// If any error occured while resolving it leaves that part as it is.
+// If any error occurred while resolving it leaves that part as it is.
 // e.g. "\\x20" in a string will be replaced with value of "\x20" i.e. space
 func ReplaceHexCodesWithValue(s string) (string, error) {
 	regexString := "\\\\[xX][0-9a-fA-F]{2}"
@@ -50,7 +48,7 @@ func ReplaceHexCodesWithValue(s string) (string, error) {
 	return pattern.ReplaceAllStringFunc(s, func(s string) string {
 		bytes, err := hex.DecodeString(s[2:])
 		if err != nil {
-			glog.Errorf("Error occured while resolving %q. Error: %+v", s, err)
+			glog.Errorf("Error occurred while resolving %q. Error: %+v", s, err)
 			return s
 		}
 		return string(bytes)

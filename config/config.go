@@ -57,22 +57,26 @@ func LoadConf(confFilePath string) error {
 	return nil
 }
 
+// getConfValueByStringField returns value of the given field string in given Configuration
 func getConfValueByStringField(conf Configuration, field string) string {
 	r := reflect.ValueOf(conf)
 	f := reflect.Indirect(r).FieldByName(field)
 	return f.String()
 }
 
+// GetDefaultValueByStringField returns the value of the given field string in Default Configuration
 // fields should be in exact case as the field is present in struct Configuration
 func GetDefaultValueByStringField(field string) string {
 	return getConfValueByStringField(defaultConf, field)
 }
 
+// GetUserConfValueByStringField returns the value of the given field string in Default Configuration
 // fields should be in exact case as the field is present in struct Configuration
 func GetUserConfValueByStringField(field string) string {
 	return getConfValueByStringField(Conf, field)
 }
 
+// GetConf returns the applicable configuration for the given field
 func GetConf(field string) string {
 	if value, ok := os.LookupEnv("CITF_CONF_" + strings.ToUpper(field)); ok {
 		return value
@@ -83,6 +87,7 @@ func GetConf(field string) string {
 	return GetDefaultValueByStringField(field)
 }
 
+// Environment returns the environment which should be used in testing
 func Environment() string {
 	return GetConf("Environment")
 }

@@ -27,7 +27,7 @@ import (
 // ExecCommand executes the command supplied and return the output as well as error
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecCommand(cmd string) (string, error) {
 	if common.DebugEnabled {
@@ -47,7 +47,7 @@ func ExecCommand(cmd string) (string, error) {
 // It also takes one sync.WaitGroup object as an argument which it notifies once command is executed
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecCommandSync(cmd string, wg *sync.WaitGroup) (string, error) {
 	out, err := ExecCommand(cmd)
@@ -58,7 +58,7 @@ func ExecCommandSync(cmd string, wg *sync.WaitGroup) (string, error) {
 // ExecCommandWithSudo executes the command supplied with `sudo` and return the output as well as error
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecCommandWithSudo(cmd string) (string, error) {
 	return ExecCommand("sudo " + cmd)
@@ -68,7 +68,7 @@ func ExecCommandWithSudo(cmd string) (string, error) {
 // It also takes one sync.WaitGroup object as an argument which it notifies once command is executed
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecCommandWithSudoSync(cmd string, wg *sync.WaitGroup) (string, error) {
 	out, err := ExecCommandWithSudo(cmd)
@@ -89,7 +89,7 @@ func execCommandArrayWithGivenStdin(head string, parts []string, stdin string) (
 
 // ExecCommandArrayWithGivenStdin executes the command supplied
 // then feed the supplied stdin to commands stdin then return the output as well as error
-// don't use quotes in command or argument because that quote will be considerd
+// don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecCommandArrayWithGivenStdin(cmd []string, stdin string) (string, error) {
 	return execCommandArrayWithGivenStdin(cmd[0], cmd[1:], stdin)
@@ -99,7 +99,7 @@ func ExecCommandArrayWithGivenStdin(cmd []string, stdin string) (string, error) 
 // then feed the supplied stdin to commands stdin then return the output as well as error
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecCommandWithGivenStdin(cmd, stdin string) (string, error) {
 	return ExecCommandArrayWithGivenStdin(strings.Fields(cmd), stdin)
@@ -107,7 +107,7 @@ func ExecCommandWithGivenStdin(cmd, stdin string) (string, error) {
 
 // ExecCommandArrayWithGivenStdinWithSudo executes the command supplied with `sudo`
 // then feed the supplied stdin to commands stdin then return the output as well as error
-// don't use quotes in command or argument because that quote will be considerd
+// don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecCommandArrayWithGivenStdinWithSudo(cmd []string, stdin string) (string, error) {
 	return execCommandArrayWithGivenStdin("sudo", cmd, stdin)
@@ -117,7 +117,7 @@ func ExecCommandArrayWithGivenStdinWithSudo(cmd []string, stdin string) (string,
 // then feed the supplied stdin to commands stdin then return the output as well as error
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecCommandWithGivenStdinWithSudo(cmd, stdin string) (string, error) {
 	return ExecCommandArrayWithGivenStdinWithSudo(strings.Fields(cmd), stdin)
@@ -173,7 +173,7 @@ func ExecPipeTwoCommandsArray(cmd1, cmd2 []string) (string, error) {
 // and feed its output to second command as input
 // Since this function splits the commands on whitespaces, avoid those commands
 // whose argument has space or if the command itself have the space
-// Also don't use quotes in command or argument because that quote will be considerd
+// Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecPipeTwoCommands(cmd1, cmd2 string) (string, error) {
 	// splitting head => g++ parts => rest of the command

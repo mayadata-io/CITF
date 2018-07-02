@@ -32,7 +32,7 @@ func (docker Docker) Teardown() error {
 		for _, container := range containers {
 			err = runCommand("docker stop -f " + container)
 			if err != nil {
-				glog.Errorf("error occured while stopping docker container: %s. Error: %+v\n", container, err)
+				glog.Errorf("error occurred while stopping docker container: %s. Error: %+v\n", container, err)
 			} else {
 				fmt.Printf("Stopped container: %s\n", container)
 			}
