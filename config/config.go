@@ -50,7 +50,9 @@ func LoadConf(confFilePath string) error {
 		return fmt.Errorf("error reading file: %q. Error: %+v", confFilePath, err)
 	}
 
-	err = yaml.Unmarshal(yamlBytes, Conf)
+	// Always pass pointer to the destination structure.
+	// https://github.com/go-yaml/yaml/issues/224
+	err = yaml.Unmarshal(yamlBytes, &Conf)
 	if err != nil {
 		return fmt.Errorf("error parsing file: %q. Error: %+v", confFilePath, err)
 	}
