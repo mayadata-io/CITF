@@ -16,3 +16,7 @@ install:
 script:
   - make
   - make gocyclo
+  - make test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
