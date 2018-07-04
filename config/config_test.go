@@ -30,7 +30,7 @@ environment: minikube
 	}
 	f.WriteString(fileData1)
 
-	// Create yaml file with bad intendation
+	// Create yaml file with bad indentation
 	fileData2 := `
 	environment: minikube
 	`
@@ -206,7 +206,7 @@ func TestGetUserConfValueByStringField(t *testing.T) {
 			}
 		})
 	}
-	Conf = Configuration{} // Reset value of Conf to default
+	Conf = Configuration{} // Reset value of Conf to default (being a global guy)
 }
 
 func TestGetConf(t *testing.T) {
@@ -221,9 +221,10 @@ func TestGetConf(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
-		args args
-		want string
+		name    string
+		args    args
+		want    string
+		cleanup func()
 	}{
 		{
 			name: "GetConfWithEnvSuccess",
@@ -231,6 +232,9 @@ func TestGetConf(t *testing.T) {
 				field: "Environment",
 			},
 			want: "minikube",
+			cleanup: func() {
+				os.Unsetenv("CITF_CONF_ENVIRONMENT")
+			},
 		},
 		{
 			name: "GetConfWithConfValueSuccess",
@@ -238,13 +242,19 @@ func TestGetConf(t *testing.T) {
 				field: "Environment",
 			},
 			want: "Dear minikube",
+			cleanup: func() {
+				Conf = Configuration{
+					Environment: "",
+				}
+			},
 		},
 		{
 			name: "GetConfWithDefaultConfValueSuccess",
 			args: args{
 				field: "Environment",
 			},
-			want: "minikube",
+			want:    "minikube",
+			cleanup: func() {},
 		},
 	}
 	for _, tt := range tests {
@@ -253,14 +263,7 @@ func TestGetConf(t *testing.T) {
 				t.Errorf("GetConf() = %v, want %v", got, tt.want)
 			}
 		})
-		if tt.name == "GetConfWithEnvSuccess" {
-			os.Unsetenv("CITF_CONF_ENVIRONMENT")
-		}
-		if tt.name == "GetConfWithConfValueSuccess" {
-			Conf = Configuration{
-				Environment: "",
-			}
-		}
+		tt.cleanup()
 	}
 }
 
