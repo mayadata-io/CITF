@@ -259,15 +259,20 @@ func (k8s K8S) YAMLApply(yamlPath string) error {
 	return nil
 }
 
-// ExecToPodThroughAPI uninterractively exec to the pod with the command specified.
+// ExecToPodThroughAPI performs non-interactive exec to the pod with the specified command using client-go.
 // :param string command: list of the str which specify the command.
+// :param string containerName: name of the container in the Pod. (If the Pod has only one container, then it can be Empty String)
 // :param string pod_name: Pod name
-// :param string namespace: namespace of the Pod.
-// :param io.Reader stdin: Standerd Input if necessary, otherwise `nil`
+// :param string namespace: namespace of the Pod. (If it is blank string then, namespace will be default i.e. k8s.io/api/core/v1.NamespaceDefault)
+// :param io.Reader stdin: Standard Input if necessary, otherwise `nil`
 // :return: string: Output of the command. (STDOUT)
 //          string: Errors. (STDERR)
 //           error: If any error has occurred otherwise `nil`
-func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.Reader) (string, string, error) {
+func (k8s K8S) ExecToPodThroughAPI(command, containerName, podName, namespace string, stdin io.Reader) (string, string, error) {
+	if len(namespace) == 0 {
+		namespace = core_v1.NamespaceDefault
+	}
+
 	req := k8s.Clientset.Core().RESTClient().Post().
 		Resource("pods").
 		Name(podName).
@@ -279,13 +284,18 @@ func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.
 	}
 
 	parameterCodec := runtime.NewParameterCodec(scheme)
-	req.VersionedParams(&core_v1.PodExecOptions{
+	podExecOptions := core_v1.PodExecOptions{
 		Command: strings.Fields(command),
 		Stdin:   stdin != nil,
 		Stdout:  true,
 		Stderr:  true,
 		TTY:     false,
-	}, parameterCodec)
+	}
+	if len(containerName) != 0 {
+		podExecOptions.Container = containerName
+	}
+
+	req.VersionedParams(&podExecOptions, parameterCodec)
 
 	if common.DebugEnabled {
 		fmt.Println("Request URL: ", req.URL().String())
@@ -310,22 +320,52 @@ func (k8s K8S) ExecToPodThroughAPI(command, podName, namespace string, stdin io.
 	return stdout.String(), stderr.String(), nil
 }
 
-// ExecToPod uninterractively exec to the pod with the command specified
-// first through API with `stdin` param as `nil`, if it fails then it uses `kubectl exec`
+// ExecToPodThroughKubectl performs non-interactive exec to the pod with the specified command using `kubectl exec`
 // :param string command: list of the str which specify the command.
+// :param string containerName: name of the container in the Pod. (If the Pod has only one container, then it can be Empty String)
 // :param string pod_name: Pod name
-// :param string namespace: namespace of the Pod.
+// :param string namespace: namespace of the Pod. (If it is blank string then, namespace will be default i.e. k8s.io/api/core/v1.NamespaceDefault)
 // :return: string: Output of the command. (STDOUT)
 //           error: If any error has occurred otherwise `nil`
-func (k8s K8S) ExecToPod(command, podName, namespace string) (string, error) {
-	stdout, stderr, err := k8s.ExecToPodThroughAPI(command, podName, namespace, nil)
+func (k8s K8S) ExecToPodThroughKubectl(command, containerName, podName, namespace string) (string, error) {
+	kubectlCommand := "kubectl"
+
+	// adding namespace if namespace is not blank string
+	if len(namespace) != 0 {
+		kubectlCommand += " -n " + namespace
+	}
+
+	// adding podName
+	kubectlCommand += " exec " + podName
+
+	// adding container name if containerName is not a blank string
+	if len(containerName) != 0 {
+		kubectlCommand += " -c " + containerName
+	}
+
+	// finally adding command to execute
+	kubectlCommand += " -- " + command
+
+	return sysutil.ExecCommand(kubectlCommand)
+}
+
+// ExecToPod performs non-interactive exec to the pod with the specified command.
+// first through API with `stdin` param as `nil`, if it fails then it uses `kubectl exec`
+// :param string command: list of the str which specify the command.
+// :param string containerName: name of the container in the Pod. (If the Pod has only one container, then it can be Empty String)
+// :param string pod_name: Pod name
+// :param string namespace: namespace of the Pod. (If it is blank string then, namespace will be default i.e. k8s.io/api/core/v1.NamespaceDefault)
+// :return: string: Output of the command. (STDOUT)
+//           error: If any error has occurred otherwise `nil`
+func (k8s K8S) ExecToPod(command, containerName, podName, namespace string) (string, error) {
+	stdout, stderr, err := k8s.ExecToPodThroughAPI(command, containerName, podName, namespace, nil)
 	if err == nil {
 		return stdout, nil
 	}
 
 	// When Exec through API fails
 	glog.Errorf("error while exec into Pod through API. Stderr: %q. Error: %+v", stderr, err)
-	return sysutil.ExecCommand("kubectl -n " + namespace + " exec " + podName + " -- " + command)
+	return k8s.ExecToPodThroughKubectl(command, containerName, podName, namespace)
 }
 
 // GetLog returns the log of the pod.
