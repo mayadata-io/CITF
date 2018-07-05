@@ -25,6 +25,8 @@
 #   unused-packages = true
 
 
+required = ["k8s.io/code-generator/cmd/client-gen"]
+
 [[constraint]]
   branch = "master"
   name = "github.com/golang/glog"
@@ -34,16 +36,20 @@
   version = "2.2.1"
 
 [[constraint]]
+  branch = "release-1.8"
   name = "k8s.io/api"
-  version = "kubernetes-1.8.0"
 
 [[constraint]]
+  branch = "release-1.8"
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.8.0"
 
 [[constraint]]
   name = "k8s.io/client-go"
   version = "5.0.0"
+
+[[constraint]]
+  name = "k8s.io/code-generator"
+  branch = "release-1.8"
 
 [prune]
   go-tests = true
