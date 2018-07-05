@@ -59,14 +59,21 @@ func (k8s K8S) GetAllNamespacesMap() (map[string]core_v1.Namespace, error) {
 	return namespaces, nil
 }
 
-// GetPod returns first Pod object which has a prefix specified in its name in the given namespace.
-// :return: kubernetes.client.models.v1_pod.V1Pod: Pod object.
-func (k8s K8S) GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
+// GetPod returns the Pod object for given podName in the given namespace.
+// :return: *kubernetes.client.models.v1_pod.V1Pod: Pointer to Pod objects.
+func (k8s K8S) GetPod(namespace, podName string) (*core_v1.Pod, error) {
+	podsClient := k8s.Clientset.CoreV1().Pods(namespace)
+	return podsClient.Get(podName, meta_v1.GetOptions{})
+}
+
+// GetPods returns all the Pods object which has a prefix specified in its name in the given namespace.
+// :return: []kubernetes.client.models.v1_pod.V1Pod: Slice of Pod objects.
+func (k8s K8S) GetPods(namespace, podNamePrefix string) ([]core_v1.Pod, error) {
 	// Try to get the pod for 10 times as sometime code reaches
 	// when pod is not even in ContainerCreating state
 	i := 0
-	var thePod core_v1.Pod
-	for reflect.DeepEqual(thePod, core_v1.Pod{}) && i < 10 {
+	thePods := []core_v1.Pod{}
+	for len(thePods) == 0 && i < 10 {
 		time.Sleep(2 * time.Second)
 
 		// List pods
@@ -85,8 +92,7 @@ func (k8s K8S) GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 				fmt.Println("Complete Pod name is:", pod.Name)
 			}
 			if strings.HasPrefix(pod.Name, podNamePrefix) {
-				thePod = pod
-				break
+				thePods = append(thePods, pod)
 			}
 		}
 		if common.DebugEnabled {
@@ -94,15 +100,16 @@ func (k8s K8S) GetPod(namespace, podNamePrefix string) (core_v1.Pod, error) {
 		}
 		i++
 	}
-	if reflect.DeepEqual(thePod, core_v1.Pod{}) {
-		return thePod, errors.New("failed getting NDM-Pod in given time")
+
+	if len(thePods) == 0 {
+		return thePods, errors.New("failed getting NDM-Pod in given time")
 	}
 
-	return thePod, nil
+	return thePods, nil
 }
 
 // ReloadPod reloads the state of the pod supplied and return the recent one
-func (k8s K8S) ReloadPod(pod core_v1.Pod) (core_v1.Pod, error) {
+func (k8s K8S) ReloadPod(pod core_v1.Pod) (*core_v1.Pod, error) {
 	return k8s.GetPod(pod.Namespace, pod.Name)
 }
 
@@ -125,12 +132,16 @@ func (k8s K8S) GetPodPhaseStr(pod core_v1.Pod) string {
 //    :param timeout: maximum time duration to get the container's state.
 //                       This method does not very strictly obey this param.
 //    :return: k8s.io/api/core/v1.ContainerState: state of the container.
-func (k8s K8S) GetContainerStateInPod(pod core_v1.Pod, containerIndex int, timeout time.Duration) (core_v1.ContainerState, error) {
+func (k8s K8S) GetContainerStateInPod(pod *core_v1.Pod, containerIndex int, timeout time.Duration) (core_v1.ContainerState, error) {
+	if pod == nil {
+		return core_v1.ContainerState{}, errors.New("nil argument supplied for pod")
+	}
+
 	var err error
 	startTime := time.Now()
 	for reflect.DeepEqual(pod.Status.ContainerStatuses, []core_v1.ContainerStatus(nil)) && time.Since(startTime) < timeout {
 		time.Sleep(time.Second)
-		pod, err = k8s.ReloadPod(pod)
+		pod, err = k8s.ReloadPod(*pod)
 		if err != nil {
 			return core_v1.ContainerState{}, err
 		}
@@ -141,7 +152,7 @@ func (k8s K8S) GetContainerStateInPod(pod core_v1.Pod, containerIndex int, timeo
 
 	for len(pod.Status.ContainerStatuses) <= containerIndex && time.Since(startTime) < timeout {
 		time.Sleep(time.Second)
-		pod, err = k8s.ReloadPod(pod)
+		pod, err = k8s.ReloadPod(*pod)
 		if err != nil {
 			return core_v1.ContainerState{}, err
 		}
