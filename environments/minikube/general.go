@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openebs/CITF/common"
 	sysutil "github.com/openebs/CITF/utils/system"
 )
 
@@ -60,4 +61,9 @@ func NewMinikube() Minikube {
 		Timeout:      time.Minute,
 		WaitTimeUnit: time.Second,
 	}
+}
+
+// Name returns the name of the environment, In this case common.Minikube
+func (minikube Minikube) Name() string {
+	return common.Minikube
 }

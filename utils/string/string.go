@@ -20,15 +20,17 @@ import (
 	"regexp"
 
 	"github.com/golang/glog"
-	"github.com/openebs/CITF/common"
 	"gopkg.in/yaml.v2"
 )
+
+// DebugEnabled specifies if this package print debug information
+var DebugEnabled = false
 
 // PrettyString returns the prettified string of the interface supplied. (If it can)
 func PrettyString(in interface{}) string {
 	jsonStr, err := json.MarshalIndent(in, "", "    ")
 	if err != nil {
-		if common.DebugEnabled {
+		if DebugEnabled {
 			fmt.Printf("unable to marshal, Error: %+v\n", err)
 		}
 		return fmt.Sprintf("%+v", in)

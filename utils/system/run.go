@@ -19,8 +19,6 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
-
-	"github.com/openebs/CITF/common"
 )
 
 // RunCommand executes the command supplied and return the error
@@ -29,7 +27,7 @@ import (
 // Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func RunCommand(cmd string) error {
-	if common.DebugEnabled {
+	if DebugEnabled {
 		fmt.Printf("Executing command: %q\n", cmd)
 	}
 	// splitting head => g++ parts => rest of the command

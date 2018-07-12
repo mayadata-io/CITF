@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/openebs/CITF/common"
+	"github.com/openebs/CITF/config"
 )
 
 // runPostStartCommandsForMinikube runs the commands required when run minikube as --vm-driver=none
@@ -55,12 +55,12 @@ func (minikube Minikube) StartMinikube() error {
 	}
 
 	envChangeMinikubeNoneUser := os.Getenv("CHANGE_MINIKUBE_NONE_USER")
-	if common.DebugEnabled {
+	if config.Debug() {
 		fmt.Printf("Environ CHANGE_MINIKUBE_NONE_USER = %q\n", envChangeMinikubeNoneUser)
 	}
 	if envChangeMinikubeNoneUser == "true" {
 		// Below commands shall automatically run in this case.
-		if common.DebugEnabled {
+		if config.Debug() {
 			fmt.Println("Returning from setup.")
 		}
 		return nil
@@ -82,7 +82,7 @@ func (minikube Minikube) StartMinikube() error {
 func (minikube Minikube) Setup() error {
 	minikubeStatus, err := minikube.Status()
 
-	if common.DebugEnabled {
+	if config.Debug() {
 		if err != nil {
 			fmt.Printf("Error occurred while checking minikube status. Error: %+v\n", err)
 		} else {
@@ -93,6 +93,8 @@ func (minikube Minikube) Setup() error {
 	teardownRequired := false
 	startRequired := false
 
+	// I won't use common.Minikube here because I am not really using name here,
+	// this is just another string which appears in the output of minikube status command
 	status, ok := minikubeStatus["minikube"]
 	if !ok {
 		fmt.Println("\"minikube\" not present in status. May be minikube is not accessible. Aborting...")

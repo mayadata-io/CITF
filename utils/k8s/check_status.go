@@ -54,3 +54,14 @@ func (k8s K8S) IsPodStateGood(podState string) bool {
 
 	return false
 }
+
+// IsPodRunning returns whether all the containers in a given pod is running
+// TODO: Check if it works for the Pod where one container has successfully terminated but other is running
+func (k8s K8S) IsPodRunning(pod *api_core_v1.Pod) bool {
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		if !containerStatus.Ready {
+			return false
+		}
+	}
+	return true
+}
