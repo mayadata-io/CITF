@@ -25,11 +25,10 @@ import (
 	"errors"
 
 	"github.com/golang/glog"
-	"github.com/openebs/CITF/common"
 	strutil "github.com/openebs/CITF/utils/string"
 	sysutil "github.com/openebs/CITF/utils/system"
 	core_v1 "k8s.io/api/core/v1"
-	v1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -67,101 +66,252 @@ func (k8s K8S) GetPod(namespace, podName string) (*core_v1.Pod, error) {
 }
 
 // GetPods returns all the Pods object which has a prefix specified in its name in the given namespace.
-// :return: []kubernetes.client.models.v1_pod.V1Pod: Slice of Pod objects.
+// it tries to get the pods which match the criteria only once.
+// NOTE: it counts pods which are not even in ContainerCreating state yet. Deal with them properly.
 func (k8s K8S) GetPods(namespace, podNamePrefix string) ([]core_v1.Pod, error) {
-	// Try to get the pod for 10 times as sometime code reaches
-	// when pod is not even in ContainerCreating state
-	i := 0
-	thePods := []core_v1.Pod{}
-	for len(thePods) == 0 && i < 10 {
-		time.Sleep(2 * time.Second)
+	var thePods []core_v1.Pod
 
-		// List pods
-		pods, err := k8s.Clientset.CoreV1().Pods(namespace).List(meta_v1.ListOptions{})
-		if err != nil {
-			fmt.Printf("Error occurred: %+v\n", err)
-		}
-
-		// Find the Pod
-		if common.DebugEnabled {
-			fmt.Println(strings.Repeat("*", 80))
-			fmt.Printf("Current pods in %q namespace are:\n", namespace)
-		}
-		for _, pod := range pods.Items {
-			if common.DebugEnabled {
-				fmt.Println("Complete Pod name is:", pod.Name)
-			}
-			if strings.HasPrefix(pod.Name, podNamePrefix) {
-				thePods = append(thePods, pod)
-			}
-		}
-		if common.DebugEnabled {
-			fmt.Println(strings.Repeat("*", 80))
-		}
-		i++
+	// List pods
+	pods, err := k8s.Clientset.CoreV1().Pods(namespace).List(meta_v1.ListOptions{})
+	if err != nil {
+		return thePods, err
 	}
 
-	if len(thePods) == 0 {
-		return thePods, errors.New("failed getting NDM-Pod in given time")
+	// Find the Pod
+	if DebugEnabled {
+		fmt.Println(strings.Repeat("*", 80))
+		fmt.Printf("All pods in %q namespace are:\n", namespace)
+	}
+	for _, pod := range pods.Items {
+		if DebugEnabled {
+			fmt.Println("Complete Pod name is:", pod.Name)
+		}
+		if strings.HasPrefix(pod.Name, podNamePrefix) {
+			thePods = append(thePods, pod)
+		}
+	}
+	if DebugEnabled {
+		fmt.Println(strings.Repeat("*", 80))
 	}
 
-	return thePods, nil
+	return thePods, err
 }
 
-// ReloadPod reloads the state of the pod supplied and return the recent one
-func (k8s K8S) ReloadPod(pod core_v1.Pod) (*core_v1.Pod, error) {
-	return k8s.GetPod(pod.Namespace, pod.Name)
+// GetPodsUntilQuitSignal returns all the Pods object which has a prefix specified in its name in the given namespace.
+// it tries to get the pods which match the criteria unless `true` recieved from `quit` or it gets at least one such pod.
+// NOTE: it counts pods which are not even in ContainerCreating state yet. Deal with them properly.
+func (k8s K8S) GetPodsUntilQuitSignal(namespace, podNamePrefix string, quit <-chan bool) (thePods []core_v1.Pod, err error) {
+	for {
+		select {
+		case quitting := <-quit:
+			if quitting {
+				if len(thePods) == 0 {
+					err = fmt.Errorf("failed to get any pod which starts with %q, forced to quit", podNamePrefix)
+				} else {
+					glog.Info("quit signal recieved `true`, quitting...")
+					err = nil
+				}
+				return
+			}
+			glog.Info("quit signal recieved `false`, not quitting...")
+
+		default:
+			thePods, err = k8s.GetPods(namespace, podNamePrefix)
+			if err != nil {
+				glog.Errorf("error getting pods: %+v", err)
+			} else if len(thePods) != 0 {
+				return thePods, nil
+			} else if DebugEnabled { // If no pods found and debug is enabled then
+				glog.Info("no pods found in this iteration")
+			}
+
+			time.Sleep(time.Second)
+		}
+	}
+}
+
+// GetPodsOrTimeout returns all the Pods object which has a prefix specified in its name in the given namespace.
+// it tries to get the pods which match the criteria unless timeout occurs or it gets at least one such pod.
+// NOTE: it counts pods which are not even in ContainerCreating state yet. Deal with them properly.
+func (k8s K8S) GetPodsOrTimeout(namespace, podNamePrefix string, timeout time.Duration) ([]core_v1.Pod, error) {
+	quit := make(chan bool)
+	time.AfterFunc(timeout, func() {
+		glog.Infof("timeout of duration %v ends", timeout)
+		quit <- true
+	})
+
+	return k8s.GetPodsUntilQuitSignal(namespace, podNamePrefix, quit)
+}
+
+// GetPodsOrBlock returns all the Pods object which has a prefix specified in its name in the given namespace.
+// it tries to get the pods which match the criteria unless it gets at least one such pod.
+// NOTE: it counts pods which are not even in ContainerCreating state yet. Deal with them properly.
+func (k8s K8S) GetPodsOrBlock(namespace, podNamePrefix string) ([]core_v1.Pod, error) {
+	return k8s.GetPodsUntilQuitSignal(namespace, podNamePrefix, nil)
+}
+
+// ReloadPod reloads the state of the pod supplied and return error if any
+func (k8s K8S) ReloadPod(pod *core_v1.Pod) (err error) {
+	pod, err = k8s.GetPod(pod.Namespace, pod.Name)
+	return
 }
 
 // GetPodPhase returns phase of the pod passed as an k8s.io/api/core/v1.PodPhase object.
 //		:param k8s.io/api/core/v1.Pod pod: pod object for which you want to get phase.
 //		:return: k8s.io/api/core/v1.PodPhase: phase of the pod.
-func (k8s K8S) GetPodPhase(pod core_v1.Pod) core_v1.PodPhase {
+func (k8s K8S) GetPodPhase(pod *core_v1.Pod) core_v1.PodPhase {
 	return pod.Status.Phase
 }
 
 // GetPodPhaseStr returns phase of the pod passed in string format.
 //		:param k8s.io/api/core/v1.Pod pod: pod object for which you want to get phase.
 //		:return: str: phase of the pod.
-func (k8s K8S) GetPodPhaseStr(pod core_v1.Pod) string {
+func (k8s K8S) GetPodPhaseStr(pod *core_v1.Pod) string {
 	return string(k8s.GetPodPhase(pod))
 }
 
-// GetContainerStateInPod returns the state of the container of supplied index of the supplied Pod.
+// GetContainerStatesInPod tries to get the states of all the containers of the supplied Pod only once
+//    :param pod: pod object on which operation should be performed
+//    :return: []k8s.io/api/core/v1.ContainerState: slice which holds states of the containers.
+//           : error: error if occurred, `nil` otherwise
+func (k8s K8S) GetContainerStatesInPod(pod *core_v1.Pod) (containerStates []core_v1.ContainerState, err error) {
+	// Check if pointer to pod is nil
+	if pod == nil {
+		err = errors.New("nil argument supplied for pod")
+		return
+	}
+
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		containerStates = append(containerStates, containerStatus.State)
+	}
+	return
+}
+
+// GetContainerStatesInPodUntilToldToQuit tries to get the states of all the containers of the supplied Pod
+// until `true` is sent in `quit` channel
+//    :param pod: pod object on which operation should be performed
+//    :param quit: channel which is used to stop this function.
+//    :return: []k8s.io/api/core/v1.ContainerState: slice which holds states of the containers.
+//           : error: error if occurred, `nil` otherwise
+func (k8s K8S) GetContainerStatesInPodUntilToldToQuit(pod *core_v1.Pod, quit <-chan bool) (containerStates []core_v1.ContainerState, err error) {
+	for {
+		select {
+		case quitting := <-quit:
+			if quitting {
+				return
+			}
+		default:
+			containerStates, err = k8s.GetContainerStatesInPod(pod)
+			if err != nil || len(containerStates) == 0 {
+				continue
+			}
+			return
+		}
+	}
+}
+
+// GetContainerStatesInPodWithTimeout returns the states of all the containers of the supplied Pod.
+//    :param pod: pod object on which operation should be performed
+//    :param timeout: maximum time duration to get the container's state.
+//    :return: []k8s.io/api/core/v1.ContainerState: slice which holds states of the containers.
+//           : error: error if occurred, `nil` otherwise
+func (k8s K8S) GetContainerStatesInPodWithTimeout(pod *core_v1.Pod, timeout time.Duration) (containerStates []core_v1.ContainerState, err error) {
+	quit := make(chan bool)
+	done := make(chan bool)
+
+	go func() {
+		containerStates, err = k8s.GetContainerStatesInPodUntilToldToQuit(pod, quit)
+		done <- true
+	}()
+
+	select {
+	case <-time.After(timeout):
+		quit <- true
+	case <-done:
+	}
+	return
+}
+
+// GetContainerStateByIndexInPod tries to get the state of the container of supplied index of the supplied Pod only once
+//    :param pod: pod object on which operation should be performed
+//    :param containerIndex: index of the container for which you want state.
+//    :return: k8s.io/api/core/v1.ContainerState: state of the container.
+//           : error: error if occurred, `nil` otherwise
+func (k8s K8S) GetContainerStateByIndexInPod(pod *core_v1.Pod, containerIndex int) (containerState core_v1.ContainerState, err error) {
+	// check if container index is negative
+	if containerIndex < 0 {
+		err = errors.New("container index can not be negative")
+		return
+	}
+
+	// get state of all the containers in the pod supplied
+	var containerStates []core_v1.ContainerState
+	containerStates, err = k8s.GetContainerStatesInPod(pod)
+	if err != nil {
+		return
+	}
+
+	// if that pod has no containers
+	if len(containerStates) == 0 {
+		err = fmt.Errorf("no containers found in pod %q of namespace %q", pod.Name, pod.Namespace)
+	} else if len(containerStates) < containerIndex { // if required number of container is not present
+		err = fmt.Errorf("pod %q of namespace %q has only %d container(s) but expecting %d containers", pod.Name, pod.Namespace, len(containerStates), containerIndex+1)
+		// inside this block expected number of containers (i. e. containerIndex+1) are always more than one
+		// because control will enter this block only when number of containers is 1 or more than one
+		// but when at least 1 container is present in the pod containerIndex can't be more or equal unless it is atleast 1
+		// and when containerIndex is at least one then we are expecting at least 2 containers in the pod (number of containers = containerIndex+1)
+		// thats why in above message I have written containers instead of container(s) for expected number.
+	} else { // if there is enough containers
+		containerState = containerStates[containerIndex]
+	}
+	return
+}
+
+// GetContainerStateByIndexInPodUntilToldToQuit tries to get the state of the container of supplied index of the supplied Pod
+// until `true` is sent in `quit` channel
+//    :param pod: pod object on which operation should be performed
+//    :param containerIndex: index of the container for which you want state.
+//    :param quit: channel which is used to stop this function.
+//    :return: k8s.io/api/core/v1.ContainerState: state of the container.
+//           : error: error if occurred, `nil` otherwise
+func (k8s K8S) GetContainerStateByIndexInPodUntilToldToQuit(pod *core_v1.Pod, containerIndex int, quit <-chan bool) (containerState core_v1.ContainerState, err error) {
+	for {
+		select {
+		case quitting := <-quit:
+			if quitting {
+				return
+			}
+		default:
+			containerState, err = k8s.GetContainerStateByIndexInPod(pod, containerIndex)
+			if err != nil || reflect.DeepEqual(containerState, core_v1.ContainerState{}) {
+				continue
+			}
+			return
+		}
+	}
+}
+
+// GetContainerStateByIndexInPodWithTimeout returns the state of the container of supplied index of the supplied Pod.
+//    :param pod: pod object on which operation should be performed
 //    :param containerIndex: index of the container for which you want state.
 //    :param timeout: maximum time duration to get the container's state.
-//                       This method does not very strictly obey this param.
 //    :return: k8s.io/api/core/v1.ContainerState: state of the container.
-func (k8s K8S) GetContainerStateInPod(pod *core_v1.Pod, containerIndex int, timeout time.Duration) (core_v1.ContainerState, error) {
-	if pod == nil {
-		return core_v1.ContainerState{}, errors.New("nil argument supplied for pod")
-	}
+//           : error: error if occurred, `nil` otherwise
+func (k8s K8S) GetContainerStateByIndexInPodWithTimeout(pod *core_v1.Pod, containerIndex int, timeout time.Duration) (containerState core_v1.ContainerState, err error) {
+	quit := make(chan bool)
+	done := make(chan bool)
 
-	var err error
-	startTime := time.Now()
-	for reflect.DeepEqual(pod.Status.ContainerStatuses, []core_v1.ContainerStatus(nil)) && time.Since(startTime) < timeout {
-		time.Sleep(time.Second)
-		pod, err = k8s.ReloadPod(*pod)
-		if err != nil {
-			return core_v1.ContainerState{}, err
-		}
-	}
-	if time.Since(startTime) >= timeout {
-		return core_v1.ContainerState{}, fmt.Errorf("pod %q of namespace %q had no container till %v", pod.Name, pod.Namespace, timeout)
-	}
+	go func() {
+		containerState, err = k8s.GetContainerStateByIndexInPodUntilToldToQuit(pod, containerIndex, quit)
+		done <- true
+	}()
 
-	for len(pod.Status.ContainerStatuses) <= containerIndex && time.Since(startTime) < timeout {
-		time.Sleep(time.Second)
-		pod, err = k8s.ReloadPod(*pod)
-		if err != nil {
-			return core_v1.ContainerState{}, err
-		}
+	select {
+	case <-time.After(timeout):
+		quit <- true
+	case <-done:
 	}
-	if time.Since(startTime) >= timeout {
-		return core_v1.ContainerState{}, fmt.Errorf("pod did not had %d containers till %v", containerIndex+1, timeout)
-	}
-
-	return pod.Status.ContainerStatuses[containerIndex].State, nil
+	return
 }
 
 // GetNodes returns a list of all the nodes.
@@ -308,7 +458,7 @@ func (k8s K8S) ExecToPodThroughAPI(command, containerName, podName, namespace st
 
 	req.VersionedParams(&podExecOptions, parameterCodec)
 
-	if common.DebugEnabled {
+	if DebugEnabled {
 		fmt.Println("Request URL: ", req.URL().String())
 	}
 
@@ -384,7 +534,6 @@ func (k8s K8S) ExecToPod(command, containerName, podName, namespace string) (str
 // :param string namespace: Namespace of the pod. (required)
 // :return: string: Log of the pod specified.
 //           error: If an error has occurred, otherwise `nil`
-// TODO: Fix in API call (Error: GroupVersion is required when initializing a RESTClient)
 func (k8s K8S) GetLog(podName, namespace string) (string, error) {
 	// We can't declare a variable somewhere which can be skipped by goto
 	var req *rest.Request
@@ -404,7 +553,7 @@ func (k8s K8S) GetLog(podName, namespace string) (string, error) {
 	}
 
 	buf.ReadFrom(readCloser)
-	if common.DebugEnabled {
+	if DebugEnabled {
 		fmt.Println("Log of Pod", podName, "in Namespace", namespace, "through API:")
 		fmt.Println(buf.String())
 	}
@@ -414,4 +563,92 @@ use_kubectl:
 	glog.Errorf("Error while getting log with API call. Error: %+v", err)
 
 	return sysutil.ExecCommand("kubectl -n " + namespace + " logs " + podName)
+}
+
+// BlockUntilPodIsUp blocks until all containers of the given pod is ready
+// or when `true` is send to channel `quit`. It returns error if occurred.
+func (k8s K8S) BlockUntilPodIsUp(pod *core_v1.Pod, quit <-chan bool) (err error) {
+	var containerStates []core_v1.ContainerState
+	var terminatedContainers int
+
+	for {
+		select {
+		case quitting := <-quit:
+			if quitting {
+				glog.Info("forced to quit")
+				return
+			}
+		default:
+			if err = k8s.ReloadPod(pod); err != nil {
+				err = fmt.Errorf("error in reloading pod: %+v", err)
+				goto continue_loop
+			}
+
+			containerStates, err = k8s.GetContainerStatesInPodUntilToldToQuit(pod, nil)
+			if err != nil {
+				glog.Errorf("error getting container states")
+			}
+
+			// count terminated containers
+			terminatedContainers = 0
+			for _, containerState := range containerStates {
+				if containerState.Terminated != nil {
+					terminatedContainers++
+				}
+			}
+			// if all containers are terminated return error
+			if terminatedContainers == len(containerStates) {
+				return fmt.Errorf("all containers in the pod %q of namespace %q have terminated", pod.Name, pod.Namespace)
+			}
+
+			// if any container is in waiting state
+			for _, containerState := range containerStates {
+				if containerState.Waiting != nil {
+					if k8s.IsPodStateWait(containerState.Waiting.Reason) {
+						fmt.Printf("waiting because pod-state: %q. Details: %+v\n", containerState.Waiting.Reason, *containerState.Waiting)
+						goto continue_loop
+					} else if !k8s.IsPodStateGood(containerState.Waiting.Reason) {
+						return fmt.Errorf("pod %q of namespace %q is in bad state: %q. Details: %+v", pod.Name, pod.Namespace, containerState.Waiting.Reason, *containerState.Waiting)
+					}
+				}
+			}
+
+			for _, containerState := range containerStates {
+				if containerState.Running == nil {
+					// At this point all states are None,
+					// so just showing phase is enough
+					fmt.Printf("Waiting because pod %q of namespace %q is in phase: %q\n", pod.Name, pod.Namespace, k8s.GetPodPhase(pod))
+					goto continue_loop
+				}
+			}
+
+			goto break_loop
+		}
+
+	break_loop:
+		break
+	continue_loop:
+		time.Sleep(time.Second)
+		continue
+	}
+
+	return nil
+}
+
+// BlockUntilPodIsUpOrTimeout blocks until all containers of the given pod is ready
+// or when timeout is hit. It returns error if occurred.
+func (k8s K8S) BlockUntilPodIsUpOrTimeout(pod *core_v1.Pod, timeout time.Duration) (err error) {
+	quit := make(chan bool)
+	done := make(chan error)
+	go func() {
+		done <- k8s.BlockUntilPodIsUp(pod, quit)
+	}()
+
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(timeout):
+		quit <- true
+		return fmt.Errorf("timeout hit while waiting for pod %q of namespace %q to be up", pod.Name, pod.Namespace)
+	}
 }

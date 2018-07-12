@@ -18,7 +18,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/openebs/CITF/common"
 	api_core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -26,6 +25,9 @@ import (
 	// Install special auth plugins like GCP Plugins
 	// _ "k8s.io/client-go/plugin/pkg/client/auth"
 )
+
+// DebugEnabled specifies if this package print debug information
+var DebugEnabled = false
 
 // K8S is a struct which will be the driver for all the methods related to kubernetes
 type K8S struct {
@@ -84,7 +86,7 @@ var PodBadStates = []string{"CrashLoopBackOff", "ImagePullBackOff", "RunContaine
 func GetClientConfig() (*rest.Config, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		if common.DebugEnabled {
+		if DebugEnabled {
 			fmt.Printf("Unable to create config. Error: %+v\n", err)
 		}
 		err1 := err

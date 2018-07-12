@@ -13,18 +13,9 @@ limitations under the License.
 
 package common
 
-import (
-	"os"
-	"strings"
+const (
+	// Minikube is the name of Minikube which is "minikube"
+	Minikube = "minikube"
+	// Docker is the name of Docker which is "docker"
+	Docker = "docker"
 )
-
-// DebugEnabled governs whether to print verbose logs or not
-// It can be set by Environment Variable `CITF_VERBOSE_LOG``
-var DebugEnabled bool
-
-func init() {
-	// Debug-Environment detection
-	debugEnv := os.Getenv("CITF_VERBOSE_LOG")
-
-	DebugEnabled = strings.ToLower(debugEnv) == "true"
-}

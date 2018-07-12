@@ -84,6 +84,8 @@ func (minikube Minikube) Status() (map[string]string, error) {
 	var err error
 	for time.Since(startTime) < minikube.Timeout {
 		status, err = minikube.checkStatus()
+		// I won't use common.Minikube here because I am not really using name here,
+		// this is just another string which appears in the output of minikube status command
 		if _, ok := status["minikube"]; !ok {
 			time.Sleep(minikube.WaitTimeUnit)
 		} else {

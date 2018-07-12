@@ -21,22 +21,45 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/openebs/CITF/common"
+	k8sutil "github.com/openebs/CITF/utils/k8s"
+	strutil "github.com/openebs/CITF/utils/string"
+	sysutil "github.com/openebs/CITF/utils/system"
 	yaml "gopkg.in/yaml.v2"
 )
 
 // Configuration is struct to hold the configurations of CITF
 type Configuration struct {
 	Environment string `json:"environment,omitempty" yaml:"environment,omitempty"`
+	Debug       bool   `json:"debug,omitempty" yaml:"debug,omitempty"`
 }
 
-// Conf will contain configurations for CITF
-var Conf Configuration
-var defaultConf Configuration
+var (
+	// Conf will contain configurations for CITF
+	Conf        Configuration
+	defaultConf Configuration
+)
+
+const (
+	debugEnabledVal     = true
+	debugDisabledVal    = false
+	debugEnabledValStr  = "true"
+	debugDisabledValStr = "false"
+)
 
 func init() {
 	defaultConf = Configuration{
-		Environment: "minikube",
+		Environment: common.Minikube,
+		Debug:       debugDisabledVal,
 	}
+}
+
+// SetDubugToUtilPackages Enables/Disables debug in util packages
+// this way we are decoupling util packages from others
+func SetDubugToUtilPackages(debug bool) {
+	k8sutil.DebugEnabled = debug
+	sysutil.DebugEnabled = debug
+	strutil.DebugEnabled = debug
 }
 
 // LoadConf loads the configuration from the file which path is supplied
@@ -56,6 +79,9 @@ func LoadConf(confFilePath string) error {
 	if err != nil {
 		return fmt.Errorf("error parsing file: %q. Error: %+v", confFilePath, err)
 	}
+
+	// Set debug status to util packages
+	SetDubugToUtilPackages(Debug())
 	return nil
 }
 
@@ -93,3 +119,11 @@ func GetConf(field string) string {
 func Environment() string {
 	return GetConf("Environment")
 }
+
+// Debug returns the environment which should be used in testing
+func Debug() bool {
+	return strings.ToLower(GetConf("Debug")) == debugEnabledValStr
+}
+
+// Verbose is an alias of Debug which returns the environment which should be used in testing
+var Verbose = Debug

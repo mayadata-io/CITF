@@ -17,6 +17,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/openebs/CITF/common"
 	sysutil "github.com/openebs/CITF/utils/system"
 )
 
@@ -48,4 +49,9 @@ type Docker struct{}
 // NewDocker returns Docker struct
 func NewDocker() Docker {
 	return Docker{}
+}
+
+// Name returns the name of the environment, In this case common.Docker
+func (docker Docker) Name() string {
+	return common.Docker
 }

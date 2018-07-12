@@ -44,7 +44,7 @@ func NewCITF(confFilePath string) (CITF, error) {
 	}
 
 	switch config.Environment() {
-	case "minikube":
+	case common.Minikube:
 		environment = minikube.NewMinikube()
 	default:
 		// Exit with Error
@@ -60,6 +60,6 @@ func NewCITF(confFilePath string) (CITF, error) {
 		K8S:          k8sInstance,
 		Environment:  environment,
 		Docker:       docker.NewDocker(),
-		DebugEnabled: common.DebugEnabled,
+		DebugEnabled: config.Debug(),
 	}, nil
 }
