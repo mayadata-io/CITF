@@ -15,6 +15,7 @@ package k8s
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,6 +34,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+)
+
+const (
+	negativeIndexErrorMessage = "container index can not be negative"
 )
 
 // GetAllNamespacesCoreV1NamespaceArray returns V1NamespaceList of all the namespaces.
@@ -151,9 +156,8 @@ func (k8s K8S) GetPodsOrBlock(namespace, podNamePrefix string) ([]core_v1.Pod, e
 }
 
 // ReloadPod reloads the state of the pod supplied and return error if any
-func (k8s K8S) ReloadPod(pod *core_v1.Pod) (err error) {
-	pod, err = k8s.GetPod(pod.Namespace, pod.Name)
-	return
+func (k8s K8S) ReloadPod(pod *core_v1.Pod) (*core_v1.Pod, error) {
+	return k8s.GetPod(pod.Namespace, pod.Name)
 }
 
 // GetPodPhase returns phase of the pod passed as an k8s.io/api/core/v1.PodPhase object.
@@ -201,6 +205,10 @@ func (k8s K8S) GetContainerStatesInPodUntilToldToQuit(pod *core_v1.Pod, quit <-c
 				return
 			}
 		default:
+			pod, err = k8s.ReloadPod(pod)
+			if err != nil {
+				continue
+			}
 			containerStates, err = k8s.GetContainerStatesInPod(pod)
 			if err != nil || len(containerStates) == 0 {
 				continue
@@ -240,7 +248,7 @@ func (k8s K8S) GetContainerStatesInPodWithTimeout(pod *core_v1.Pod, timeout time
 func (k8s K8S) GetContainerStateByIndexInPod(pod *core_v1.Pod, containerIndex int) (containerState core_v1.ContainerState, err error) {
 	// check if container index is negative
 	if containerIndex < 0 {
-		err = errors.New("container index can not be negative")
+		err = errors.New(negativeIndexErrorMessage)
 		return
 	}
 
@@ -283,7 +291,8 @@ func (k8s K8S) GetContainerStateByIndexInPodUntilToldToQuit(pod *core_v1.Pod, co
 			}
 		default:
 			containerState, err = k8s.GetContainerStateByIndexInPod(pod, containerIndex)
-			if err != nil || reflect.DeepEqual(containerState, core_v1.ContainerState{}) {
+			// If we get negative index then we should immediately return otherwise try again
+			if err.Error() != negativeIndexErrorMessage && (err != nil || reflect.DeepEqual(containerState, core_v1.ContainerState{})) {
 				continue
 			}
 			return
@@ -579,7 +588,7 @@ func (k8s K8S) BlockUntilPodIsUp(pod *core_v1.Pod, quit <-chan bool) (err error)
 				return
 			}
 		default:
-			if err = k8s.ReloadPod(pod); err != nil {
+			if pod, err = k8s.ReloadPod(pod); err != nil {
 				err = fmt.Errorf("error in reloading pod: %+v", err)
 				goto continue_loop
 			}
@@ -635,9 +644,9 @@ func (k8s K8S) BlockUntilPodIsUp(pod *core_v1.Pod, quit <-chan bool) (err error)
 	return nil
 }
 
-// BlockUntilPodIsUpOrTimeout blocks until all containers of the given pod is ready
-// or when timeout is hit. It returns error if occurred.
-func (k8s K8S) BlockUntilPodIsUpOrTimeout(pod *core_v1.Pod, timeout time.Duration) (err error) {
+// BlockUntilPodIsUpWithContext blocks until all containers of the given pod is ready
+// or when supplied context cancelled. It returns error if occurred.
+func (k8s K8S) BlockUntilPodIsUpWithContext(ctx context.Context, pod *core_v1.Pod) (err error) {
 	quit := make(chan bool)
 	done := make(chan error)
 	go func() {
@@ -647,8 +656,18 @@ func (k8s K8S) BlockUntilPodIsUpOrTimeout(pod *core_v1.Pod, timeout time.Duratio
 	select {
 	case err := <-done:
 		return err
-	case <-time.After(timeout):
+	case <-ctx.Done():
 		quit <- true
-		return fmt.Errorf("timeout hit while waiting for pod %q of namespace %q to be up", pod.Name, pod.Namespace)
+		return fmt.Errorf("context cancelled while waiting for pod %q of namespace %q to be up", pod.Name, pod.Namespace)
 	}
+}
+
+// BlockUntilPodIsUpOrTimeout blocks until all containers of the given pod is ready
+// or when timeout is hit. It returns error if occurred.
+// It uses `BlockUntilPodIsUpWithContext` internally, so in case of timeout it will give error describing "context cancelled"
+func (k8s K8S) BlockUntilPodIsUpOrTimeout(pod *core_v1.Pod, timeout time.Duration) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	return k8s.BlockUntilPodIsUpWithContext(ctx, pod)
 }
