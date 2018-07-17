@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/golang/glog"
 	api_core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -37,13 +38,20 @@ type K8S struct {
 
 // NewK8S returns K8S struct
 func NewK8S() (K8S, error) {
-	config, err := GetClientConfig()
-	if err != nil {
-		return K8S{}, err
-	}
-	clientset, err := GetClientsetFromConfig(config)
-	if err != nil {
-		return K8S{}, err
+	var config *rest.Config
+	var clientset *kubernetes.Clientset
+	var err error
+
+	// For now we are ignoring this error, as we know with current design
+	// we may end-up trying to create Config even if there is no config present in the machine yet
+	config, err = GetClientConfig()
+	if err == nil {
+		clientset, err = GetClientsetFromConfig(config)
+		if err != nil {
+			return K8S{}, err
+		}
+	} else {
+		glog.Error(err)
 	}
 
 	return K8S{
