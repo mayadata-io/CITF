@@ -52,6 +52,9 @@ func init() {
 		Environment: common.Minikube,
 		Debug:       debugDisabledVal,
 	}
+
+	// Set debug status to util packages
+	SetDubugToUtilPackages(Debug())
 }
 
 // SetDubugToUtilPackages Enables/Disables debug in util packages
