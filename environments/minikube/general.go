@@ -19,8 +19,11 @@ import (
 	"time"
 
 	"github.com/openebs/CITF/common"
+	"github.com/openebs/CITF/utils/log"
 	sysutil "github.com/openebs/CITF/utils/system"
 )
+
+var logger log.Logger
 
 var (
 	useSudo     = true // Default value to use sudo

@@ -22,9 +22,7 @@ import (
 	"strings"
 
 	"github.com/openebs/CITF/common"
-	k8sutil "github.com/openebs/CITF/utils/k8s"
-	strutil "github.com/openebs/CITF/utils/string"
-	sysutil "github.com/openebs/CITF/utils/system"
+	"github.com/openebs/CITF/utils/log"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -60,9 +58,7 @@ func init() {
 // SetDubugToUtilPackages Enables/Disables debug in util packages
 // this way we are decoupling util packages from others
 func SetDubugToUtilPackages(debug bool) {
-	k8sutil.DebugEnabled = debug
-	sysutil.DebugEnabled = debug
-	strutil.DebugEnabled = debug
+	log.DebugEnabled = debug
 }
 
 // LoadConf loads the configuration from the file which path is supplied

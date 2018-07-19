@@ -16,8 +16,6 @@ package minikube
 import (
 	"fmt"
 	"os"
-
-	"github.com/openebs/CITF/config"
 )
 
 // runPostStartCommandsForMinikube runs the commands required when run minikube as --vm-driver=none
@@ -37,11 +35,8 @@ func (minikube Minikube) runPostStartCommandsForMinikubeNoneDriver() {
 	for _, command := range commands {
 		fmt.Printf("Running %q\n", command)
 		output, err := execCommand(command)
-		if err != nil {
-			fmt.Printf("Running %q failed. Error: %+v\n", command, err)
-		} else {
-			fmt.Printf("Run %q successfully. Output: %s\n", command, output)
-		}
+		logger.PrintErrorf(err, "running %q failed", command)
+		logger.PrintNonErrorf(err, "run %q successfully. Output: %s", command, output)
 	}
 }
 
@@ -55,14 +50,11 @@ func (minikube Minikube) StartMinikube() error {
 	}
 
 	envChangeMinikubeNoneUser := os.Getenv("CHANGE_MINIKUBE_NONE_USER")
-	if config.Debug() {
-		fmt.Printf("Environ CHANGE_MINIKUBE_NONE_USER = %q\n", envChangeMinikubeNoneUser)
-	}
+	logger.PrintfDebugMessage("Environ CHANGE_MINIKUBE_NONE_USER = %q", envChangeMinikubeNoneUser)
+
 	if envChangeMinikubeNoneUser == "true" {
 		// Below commands shall automatically run in this case.
-		if config.Debug() {
-			fmt.Println("Returning from setup.")
-		}
+		logger.PrintlnDebugMessage("Returning from setup.")
 		return nil
 	}
 
@@ -82,13 +74,8 @@ func (minikube Minikube) StartMinikube() error {
 func (minikube Minikube) Setup() error {
 	minikubeStatus, err := minikube.Status()
 
-	if config.Debug() {
-		if err != nil {
-			fmt.Printf("Error occurred while checking minikube status. Error: %+v\n", err)
-		} else {
-			fmt.Printf("minikube status: %q\n", minikubeStatus)
-		}
-	}
+	logger.PrintfDebugMessageIfError(err, "error occurred while checking minikube status")
+	logger.PrintfDebugMessageIfNotError(err, "minikube status: %q", minikubeStatus)
 
 	teardownRequired := false
 	startRequired := false

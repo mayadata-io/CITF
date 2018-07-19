@@ -83,21 +83,15 @@ func (k8s K8S) GetPods(namespace, podNamePrefix string) ([]core_v1.Pod, error) {
 	}
 
 	// Find the Pod
-	if DebugEnabled {
-		fmt.Println(strings.Repeat("*", 80))
-		fmt.Printf("All pods in %q namespace are:\n", namespace)
-	}
+	logger.PrintlnDebugMessage(strings.Repeat("*", 80))
+	logger.PrintfDebugMessage("all pods in %q namespace are:\n", namespace)
 	for _, pod := range pods.Items {
-		if DebugEnabled {
-			fmt.Println("Complete Pod name is:", pod.Name)
-		}
+		logger.PrintlnDebugMessage("complete Pod name is:", pod.Name)
 		if strings.HasPrefix(pod.Name, podNamePrefix) {
 			thePods = append(thePods, pod)
 		}
 	}
-	if DebugEnabled {
-		fmt.Println(strings.Repeat("*", 80))
-	}
+	logger.PrintlnDebugMessage(strings.Repeat("*", 80))
 
 	return thePods, err
 }
@@ -122,13 +116,12 @@ func (k8s K8S) GetPodsUntilQuitSignal(namespace, podNamePrefix string, quit <-ch
 
 		default:
 			thePods, err = k8s.GetPods(namespace, podNamePrefix)
-			if err != nil {
-				glog.Errorf("error getting pods: %+v", err)
-			} else if len(thePods) != 0 {
+			logger.LogErrorf(err, "error getting pods")
+			if err == nil && len(thePods) != 0 {
 				return thePods, nil
-			} else if DebugEnabled { // If no pods found and debug is enabled then
-				glog.Info("no pods found in this iteration")
 			}
+			// If no pods found and debug is enabled then
+			logger.PrintlnDebugMessage("no pods found in this iteration")
 
 			time.Sleep(time.Second)
 		}
@@ -422,8 +415,8 @@ func (k8s K8S) YAMLApply(yamlPath string) error {
 	// TODO: Try using API call first. i.e. Using client-go
 
 	err := sysutil.RunCommand("kubectl apply -f " + yamlPath)
+	logger.LogErrorf(err, "error occurred while applying the %s", yamlPath)
 	if err != nil {
-		glog.Errorf("error occurred while applying the %s. Error: %+v", yamlPath, err)
 		return fmt.Errorf("failed applying %s", yamlPath)
 	}
 	return nil
@@ -467,9 +460,7 @@ func (k8s K8S) ExecToPodThroughAPI(command, containerName, podName, namespace st
 
 	req.VersionedParams(&podExecOptions, parameterCodec)
 
-	if DebugEnabled {
-		fmt.Println("Request URL: ", req.URL().String())
-	}
+	logger.PrintlnDebugMessage("Request URL:", req.URL().String())
 
 	exec, err := remotecommand.NewSPDYExecutor(k8s.Config, "POST", req.URL())
 	if err != nil {
@@ -562,10 +553,9 @@ func (k8s K8S) GetLog(podName, namespace string) (string, error) {
 	}
 
 	buf.ReadFrom(readCloser)
-	if DebugEnabled {
-		fmt.Println("Log of Pod", podName, "in Namespace", namespace, "through API:")
-		fmt.Println(buf.String())
-	}
+	logger.PrintlnDebugMessage("Log of Pod", podName, "in Namespace", namespace, "through API:")
+	logger.PrintlnDebugMessage(buf.String())
+
 	return buf.String(), nil
 
 use_kubectl:
@@ -594,9 +584,7 @@ func (k8s K8S) BlockUntilPodIsUp(pod *core_v1.Pod, quit <-chan bool) (err error)
 			}
 
 			containerStates, err = k8s.GetContainerStatesInPodUntilToldToQuit(pod, nil)
-			if err != nil {
-				glog.Errorf("error getting container states")
-			}
+			logger.LogError(err, "error getting container states")
 
 			// count terminated containers
 			terminatedContainers = 0

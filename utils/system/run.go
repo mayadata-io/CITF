@@ -15,7 +15,6 @@ package system
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 	"strings"
 	"sync"
@@ -27,9 +26,8 @@ import (
 // Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func RunCommand(cmd string) error {
-	if DebugEnabled {
-		fmt.Printf("Executing command: %q\n", cmd)
-	}
+	logger.PrintfDebugMessage("Executing command: %q\n", cmd)
+
 	// splitting head => g++ parts => rest of the command
 	// python equivalent: parts = [x.strip() for x in cmd.split() if x.strip()]
 	parts := strings.Fields(cmd)
