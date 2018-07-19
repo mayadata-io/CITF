@@ -23,6 +23,7 @@ import (
 	"github.com/openebs/CITF/environments/docker"
 	"github.com/openebs/CITF/environments/minikube"
 	"github.com/openebs/CITF/utils/k8s"
+	"github.com/openebs/CITF/utils/log"
 )
 
 // CITF is a struct which will be the driver for all functionalities of this framework
@@ -31,6 +32,7 @@ type CITF struct {
 	K8S          k8s.K8S
 	Docker       docker.Docker
 	DebugEnabled bool
+	Logger       log.Logger
 }
 
 // NewCITF returns CITF struct. One need this in order to use any functionality of this framework.
@@ -61,5 +63,6 @@ func NewCITF(confFilePath string) (CITF, error) {
 		Environment:  environment,
 		Docker:       docker.NewDocker(),
 		DebugEnabled: config.Debug(),
+		Logger:       log.Logger{},
 	}, nil
 }

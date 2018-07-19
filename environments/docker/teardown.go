@@ -16,8 +16,6 @@ package docker
 import (
 	"fmt"
 	"strings"
-
-	"github.com/golang/glog"
 )
 
 // Teardown stops all the docker containers present on the machine
@@ -31,11 +29,8 @@ func (docker Docker) Teardown() error {
 		containers := strings.Fields(containersStr)
 		for _, container := range containers {
 			err = runCommand("docker stop -f " + container)
-			if err != nil {
-				glog.Errorf("error occurred while stopping docker container: %s. Error: %+v\n", container, err)
-			} else {
-				fmt.Printf("Stopped container: %s\n", container)
-			}
+			logger.LogErrorf(err, "error occurred while stopping docker container: %s", container)
+			logger.PrintNonErrorf(err, "Stopped container: %s", container)
 		}
 	}
 	return nil
