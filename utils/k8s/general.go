@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 
 	"github.com/golang/glog"
+	"github.com/openebs/CITF/utils/log"
 	api_core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -27,8 +28,7 @@ import (
 	// _ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-// DebugEnabled specifies if this package print debug information
-var DebugEnabled = false
+var logger log.Logger
 
 // K8S is a struct which will be the driver for all the methods related to kubernetes
 type K8S struct {
@@ -94,9 +94,7 @@ var PodBadStates = []string{"CrashLoopBackOff", "ImagePullBackOff", "RunContaine
 func GetClientConfig() (*rest.Config, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		if DebugEnabled {
-			fmt.Printf("Unable to create config. Error: %+v\n", err)
-		}
+		logger.PrintfDebugMessage("unable to create config: %+v\v", err)
 		err1 := err
 		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)

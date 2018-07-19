@@ -14,10 +14,13 @@ limitations under the License.
 package config
 
 import (
-	"fmt"
 	"os"
 	"testing"
+
+	"github.com/openebs/CITF/utils/log"
 )
+
+var logger log.Logger
 
 // CreateFile creates yaml file for test purpose
 func CreateFile() {
@@ -25,9 +28,9 @@ func CreateFile() {
 environment: minikube
 `
 	f, err := os.Create("./test-config.yaml")
-	if err != nil {
-		fmt.Println("Unable to create config file")
-	}
+
+	logger.LogError(err, "unable to create config file")
+
 	f.WriteString(fileData1)
 
 	// Create yaml file with bad indentation
@@ -35,24 +38,18 @@ environment: minikube
 	environment: minikube
 	`
 	f, err = os.Create("./test-bad-config.yaml")
-	if err != nil {
-		fmt.Println("Unable to create bad config file")
-	}
-	f.WriteString(fileData2)
+	logger.LogError(err, "unable to create bad config file")
 
+	f.WriteString(fileData2)
 }
 
 // DeleteFile deletes yaml file
 func DeleteFile() {
 	err := os.Remove("./test-config.yaml")
-	if err != nil {
-		fmt.Println("Unable to delete config file")
-	}
+	logger.LogError(err, "unable to delete config file")
 
 	err = os.Remove("./test-bad-config.yaml")
-	if err != nil {
-		fmt.Println("Unable to delete bad config file")
-	}
+	logger.LogError(err, "unable to delete bad config file")
 }
 
 func TestLoadConf(t *testing.T) {

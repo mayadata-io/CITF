@@ -20,7 +20,11 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+
+	"github.com/openebs/CITF/utils/log"
 )
+
+var logger log.Logger
 
 // ExecCommand executes the command supplied and return the output as well as error
 // Since this function splits the commands on whitespaces, avoid those commands
@@ -28,9 +32,8 @@ import (
 // Also don't use quotes in command or argument because that quote will be considered
 // part of the command
 func ExecCommand(cmd string) (string, error) {
-	if DebugEnabled {
-		fmt.Printf("Executing command: %q\n", cmd)
-	}
+	logger.PrintfDebugMessage("Executing command: %q\n", cmd)
+
 	// splitting head => g++ parts => rest of the command
 	// python equivalent: parts = [x.strip() for x in cmd.split() if x.strip()]
 	parts := strings.Fields(cmd)
@@ -124,9 +127,8 @@ func ExecCommandWithGivenStdinWithSudo(cmd, stdin string) (string, error) {
 // ExecPipeTwoCommandsArray takes two commands in its parameter. It runs first command
 // and feed its output to second command as input
 func ExecPipeTwoCommandsArray(cmd1, cmd2 []string) (string, error) {
-	if DebugEnabled {
-		fmt.Printf("Executing command: %q\n", strings.Join(cmd1, " ")+" | "+strings.Join(cmd2, " "))
-	}
+	logger.PrintfDebugMessage("Executing command: %q\n", strings.Join(cmd1, " ")+" | "+strings.Join(cmd2, " "))
+
 	c1 := exec.Command(cmd1[0], cmd1[1:]...)
 	c2 := exec.Command(cmd2[0], cmd2[1:]...)
 

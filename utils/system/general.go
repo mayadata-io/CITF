@@ -17,9 +17,6 @@ import (
 	"os"
 )
 
-// DebugEnabled specifies if this package print debug information
-var DebugEnabled = false
-
 // GetenvFallback search for the key in environment, if it is there then
 // this function returns the value otherwise it returns the fallback value
 func GetenvFallback(key, fallback string) string {

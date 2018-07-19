@@ -19,20 +19,17 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/golang/glog"
+	"github.com/openebs/CITF/utils/log"
 	"gopkg.in/yaml.v2"
 )
 
-// DebugEnabled specifies if this package print debug information
-var DebugEnabled = false
+var logger log.Logger
 
 // PrettyString returns the prettified string of the interface supplied. (If it can)
 func PrettyString(in interface{}) string {
 	jsonStr, err := json.MarshalIndent(in, "", "    ")
+	logger.PrintlnDebugMessageIfError(err, "unable to marshal")
 	if err != nil {
-		if DebugEnabled {
-			fmt.Printf("unable to marshal, Error: %+v\n", err)
-		}
 		return fmt.Sprintf("%+v", in)
 	}
 
@@ -49,8 +46,8 @@ func ReplaceHexCodesWithValue(s string) (string, error) {
 
 	return pattern.ReplaceAllStringFunc(s, func(s string) string {
 		bytes, err := hex.DecodeString(s[2:])
+		logger.LogErrorf(err, "error occurred while resolving %q", s)
 		if err != nil {
-			glog.Errorf("Error occurred while resolving %q. Error: %+v", s, err)
 			return s
 		}
 		return string(bytes)
