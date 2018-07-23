@@ -52,13 +52,13 @@ func init() {
 	}
 
 	// Set debug status to util packages
-	SetDubugToUtilPackages(Debug())
+	SetDebugToUtilPackages(Debug())
 }
 
-// SetDubugToUtilPackages Enables/Disables debug in util packages
+// SetDebugToUtilPackages Enables/Disables debug in util packages
 // this way we are decoupling util packages from others
-func SetDubugToUtilPackages(debug bool) {
-	log.DebugEnabled = debug
+func SetDebugToUtilPackages(debugEnabled bool) {
+	log.DebugEnabled = debugEnabled
 }
 
 // LoadConf loads the configuration from the file which path is supplied
@@ -80,7 +80,7 @@ func LoadConf(confFilePath string) error {
 	}
 
 	// Set debug status to util packages
-	SetDubugToUtilPackages(Debug())
+	SetDebugToUtilPackages(Debug())
 	return nil
 }
 
