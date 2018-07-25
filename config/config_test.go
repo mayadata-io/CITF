@@ -129,7 +129,7 @@ func Test_getConfValueByStringField(t *testing.T) {
 				},
 				field: "environment",
 			},
-			want: "<invalid Value>",
+			want: "<invalid reflect.Value>",
 		},
 	}
 	for _, tt := range tests {
@@ -162,7 +162,7 @@ func TestGetDefaultValueByStringField(t *testing.T) {
 			args: args{
 				field: "environment",
 			},
-			want: "<invalid Value>",
+			want: "<invalid reflect.Value>",
 		},
 	}
 	for _, tt := range tests {
@@ -264,20 +264,352 @@ func TestGetConf(t *testing.T) {
 }
 
 func TestEnvironment(t *testing.T) {
+	// to store current content of `CITF_CONF_DEBUG`
+	var environContent string
+	// to store whether `CITF_CONF_DEBUG` was even set
+	var environSet bool
+
+	var confBak Configuration
+
 	tests := []struct {
-		name string
-		want string
+		name       string
+		beforeFunc func()
+		want       string
+		afterFunc  func()
 	}{
 		{
-			name: "Environment",
-			want: "minikube",
+			name: "`CITF_CONF_ENVIRONMENT` is set to `my-environment`",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_ENVIRONMENT")
+				os.Setenv("CITF_CONF_ENVIRONMENT", "my-environment")
+			},
+			want: "my-environment",
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_ENVIRONMENT", environContent)
+				} else {
+					os.Unsetenv("CITF_CONF_ENVIRONMENT")
+				}
+			},
+		},
+		{
+			name: "`CITF_CONF_ENVIRONMENT` is not set and Environment is set to `my-environment-in-conf` in `Conf`",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_ENVIRONMENT")
+				if environSet {
+					os.Unsetenv("CITF_CONF_ENVIRONMENT")
+				}
+				confBak = Conf
+				Conf = Configuration{
+					Environment: "my-environment-in-conf",
+				}
+			},
+			want: "my-environment-in-conf",
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_ENVIRONMENT", environContent)
+				}
+				Conf = confBak
+			},
+		},
+		{
+			name: "`CITF_CONF_ENVIRONMENT` is not set and `Conf` is empty",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_ENVIRONMENT")
+				if environSet {
+					os.Unsetenv("CITF_CONF_ENVIRONMENT")
+				}
+				confBak = Conf
+				Conf = Configuration{}
+			},
+			want: defaultConf.Environment,
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_ENVIRONMENT", environContent)
+				}
+				Conf = confBak
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.beforeFunc()
 			if got := Environment(); got != tt.want {
 				t.Errorf("Environment() = %v, want %v", got, tt.want)
 			}
+			tt.afterFunc()
+		})
+	}
+}
+
+func TestDebug(t *testing.T) {
+	// to store current content of `CITF_CONF_DEBUG`
+	var environContent string
+	// to store whether `CITF_CONF_DEBUG` was even set
+	var environSet bool
+
+	var confBak Configuration
+
+	tests := []struct {
+		name       string
+		beforeFunc func()
+		want       bool
+		afterFunc  func()
+	}{
+		{
+			name: "`CITF_CONF_DEBUG` is set to true",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_DEBUG")
+				os.Setenv("CITF_CONF_DEBUG", debugEnabledValStr)
+			},
+			want: debugEnabledVal,
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_DEBUG", environContent)
+				} else {
+					os.Unsetenv("CITF_CONF_DEBUG")
+				}
+			},
+		},
+		{
+			name: "`CITF_CONF_DEBUG` is set to false",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_DEBUG")
+				os.Setenv("CITF_CONF_DEBUG", debugDisabledValStr)
+			},
+			want: debugDisabledVal,
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_DEBUG", environContent)
+				} else {
+					os.Unsetenv("CITF_CONF_DEBUG")
+				}
+			},
+		},
+		{
+			name: "`CITF_CONF_DEBUG` is not set and Debug is enabled in `Conf`",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_DEBUG")
+				if environSet {
+					os.Unsetenv("CITF_CONF_DEBUG")
+				}
+				confBak = Conf
+				Conf = Configuration{
+					Debug: debugEnabledVal,
+				}
+			},
+			want: debugEnabledVal,
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_DEBUG", environContent)
+				}
+				Conf = confBak
+			},
+		},
+		{
+			name: "`CITF_CONF_DEBUG` is not set and Debug is disabled in `Conf`",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_DEBUG")
+				if environSet {
+					os.Unsetenv("CITF_CONF_DEBUG")
+				}
+				confBak = Conf
+				Conf = Configuration{
+					Debug: debugDisabledVal,
+				}
+			},
+			want: debugDisabledVal,
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_DEBUG", environContent)
+				}
+				Conf = confBak
+			},
+		},
+		{
+			name: "`CITF_CONF_DEBUG` is not set and `Conf` is empty",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_DEBUG")
+				if environSet {
+					os.Unsetenv("CITF_CONF_DEBUG")
+				}
+				confBak = Conf
+				Conf = Configuration{}
+			},
+			want: defaultConf.Debug,
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_DEBUG", environContent)
+				}
+				Conf = confBak
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.beforeFunc()
+			if got := Debug(); got != tt.want {
+				t.Errorf("Debug() = %v, want %v", got, tt.want)
+			}
+			tt.afterFunc()
+		})
+	}
+}
+
+func TestKubeMasterURL(t *testing.T) {
+	// to store current content of `CITF_CONF_KUBEMASTERURL`
+	var environContent string
+	// to store whether `CITF_CONF_KUBEMASTERURL` was even set
+	var environSet bool
+
+	var confBak Configuration
+
+	tests := []struct {
+		name       string
+		beforeFunc func()
+		want       string
+		afterFunc  func()
+	}{
+		{
+			name: "`CITF_CONF_KUBEMASTERURL` is set to 'my-kube-master-url'",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_KUBEMASTERURL")
+				os.Setenv("CITF_CONF_KUBEMASTERURL", "my-kube-master-url")
+			},
+			want: "my-kube-master-url",
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_KUBEMASTERURL", environContent)
+				} else {
+					os.Unsetenv("CITF_CONF_KUBEMASTERURL")
+				}
+			},
+		},
+		{
+			name: "`CITF_CONF_KUBEMASTERURL` is not set and KubeMasterURL is set to `kube-master-url-in-conf` in `Conf`",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_KUBEMASTERURL")
+				if environSet {
+					os.Unsetenv("CITF_CONF_KUBEMASTERURL")
+				}
+				confBak = Conf
+				Conf = Configuration{
+					KubeMasterURL: "kube-master-url-in-conf",
+				}
+			},
+			want: "kube-master-url-in-conf",
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_KUBEMASTERURL", environContent)
+				}
+				Conf = confBak
+			},
+		},
+		{
+			name: "`CITF_CONF_KUBEMASTERURL` is not set and `Conf` is empty",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_KUBEMASTERURL")
+				if environSet {
+					os.Unsetenv("CITF_CONF_KUBEMASTERURL")
+				}
+				confBak = Conf
+				Conf = Configuration{}
+			},
+			want: defaultConf.KubeMasterURL,
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_KUBEMASTERURL", environContent)
+				}
+				Conf = confBak
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.beforeFunc()
+			if got := KubeMasterURL(); got != tt.want {
+				t.Errorf("KubeMasterURL() = %v, want %v", got, tt.want)
+			}
+			tt.afterFunc()
+		})
+	}
+}
+
+func TestKubeConfigPath(t *testing.T) {
+	// to store current content of `CITF_CONF_KUBECONFIGPATH`
+	var environContent string
+	// to store whether `CITF_CONF_KUBECONFIGPATH` was even set
+	var environSet bool
+
+	var confBak Configuration
+
+	tests := []struct {
+		name       string
+		beforeFunc func()
+		want       string
+		afterFunc  func()
+	}{
+		{
+			name: "`CITF_CONF_KUBECONFIGPATH` is set to 'my-kube-config-path'",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_KUBECONFIGPATH")
+				os.Setenv("CITF_CONF_KUBECONFIGPATH", "my-kube-config-path")
+			},
+			want: "my-kube-config-path",
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_KUBECONFIGPATH", environContent)
+				} else {
+					os.Unsetenv("CITF_CONF_KUBECONFIGPATH")
+				}
+			},
+		},
+		{
+			name: "`CITF_CONF_KUBECONFIGPATH` is not set and KubeConfigPath is set to `kube-config-path-in-conf` in `Conf`",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_KUBECONFIGPATH")
+				if environSet {
+					os.Unsetenv("CITF_CONF_KUBECONFIGPATH")
+				}
+				confBak = Conf
+				Conf = Configuration{
+					KubeConfigPath: "kube-config-path-in-conf",
+				}
+			},
+			want: "kube-config-path-in-conf",
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_KUBECONFIGPATH", environContent)
+				}
+				Conf = confBak
+			},
+		},
+		{
+			name: "`CITF_CONF_KUBECONFIGPATH` is not set and `Conf` is empty",
+			beforeFunc: func() {
+				environContent, environSet = os.LookupEnv("CITF_CONF_KUBECONFIGPATH")
+				if environSet {
+					os.Unsetenv("CITF_CONF_KUBECONFIGPATH")
+				}
+				confBak = Conf
+				Conf = Configuration{}
+			},
+			want: defaultConf.KubeConfigPath,
+			afterFunc: func() {
+				if environSet {
+					os.Setenv("CITF_CONF_KUBECONFIGPATH", environContent)
+				}
+				Conf = confBak
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.beforeFunc()
+			if got := KubeConfigPath(); got != tt.want {
+				t.Errorf("KubeConfigPath() = %v, want %v", got, tt.want)
+			}
+			tt.afterFunc()
 		})
 	}
 }
