@@ -15,10 +15,9 @@ package k8s
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/golang/glog"
+	"github.com/openebs/CITF/config"
 	"github.com/openebs/CITF/utils/log"
 	api_core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -92,19 +91,19 @@ var PodBadStates = []string{"CrashLoopBackOff", "ImagePullBackOff", "RunContaine
 // Otherwise, it tries to build config from a default kubeconfig filepath if it fails, it fallback to the default config.
 // Once it get the config, it returns the same.
 func GetClientConfig() (*rest.Config, error) {
-	config, err := rest.InClusterConfig()
+	// First of all I want to give `InClusterConfig` a try then we'll give `BuildConfigFromFlags` a chance to create config
+	clientConfig, err := rest.InClusterConfig()
 	if err != nil {
 		logger.PrintfDebugMessage("unable to create config: %+v\v", err)
 		err1 := err
-		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		clientConfig, err = clientcmd.BuildConfigFromFlags(config.KubeMasterURL(), config.KubeConfigPath())
 		if err != nil {
 			err = fmt.Errorf("InClusterConfig as well as BuildConfigFromFlags Failed. Error in InClusterConfig: %+v\nError in BuildConfigFromFlags: %+v", err1, err)
 			return nil, err
 		}
 	}
 
-	return config, nil
+	return clientConfig, nil
 }
 
 // GetClientsetFromConfig takes REST config and Create a clientset based on that and return that clientset
