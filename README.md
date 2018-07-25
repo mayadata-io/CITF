@@ -32,7 +32,13 @@ OpenEBS/project
 
 ## Instantiation
 
-Developer has to instantiate CITF using `NewCITF(configFilePath)` which will initialize it with all the required configurations. 
+Developer has to instantiate CITF using `citf.NewCITF` function, which will initialize it with all the configurations specified by `citfoptions.CreateOptions` passed to it. 
+
+> You should not pass `K8sInclude` in `citfoptions.CreateOptions` if your environment is not yet set. otherwise it will through error.
+
+> If you want all options except `K8sInclude` in `CreateOptions` to set to `true`; you may use `citfoptions.CreateOptionsIncludeAllButK8s` function.
+
+> If you want all options in `CreateOptions` to set to `true`  you may use `citfoptions.CreateOptionsIncludeAll` function.
 
 CITF struct has four fields:- 
 - Environment - To Setup or TearDown the platform such as minikube, GKE, AWS etc.
@@ -88,8 +94,9 @@ Once integration test is completed, developer can delete the setup using `TearDo
 <details>
 <summary><b>Example</b></summary>
 
-```go
+## example_test.go
 
+```go
 package example
 
 import (
@@ -99,33 +106,38 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openebs/CITF"
-	"github.com/openebs/CITF/utils/k8s"
+	citfoptions "github.com/openebs/CITF/citf_options"
 )
+
+var CitfInstance citf.CITF
 
 func TestIntegrationExample(t *testing.T) {
 	RegisterFailHandler(Fail)
+
+	var err error
+	// Initializing CITF without config file.
+	// Also We should not include K8S as currently we don't have kubernetes environment setup
+	CitfInstance, err = citf.NewCITF(citfoptions.CreateOptionsIncludeAllButK8s(""))
+	Expect(err).NotTo(HaveOccurred())
+
 	RunSpecs(t, "Integration Test Suite")
 }
-
-// Initializing CITF without config file.
-var CitfInstance, err = citf.NewCITF("")
 
 var _ = BeforeSuite(func() {
 
 	// Setting up the default Platform i.e minikube
-	err = CitfInstance.Environment.Setup()
+	err := CitfInstance.Environment.Setup()
 	Expect(err).NotTo(HaveOccurred())
 
-	// if you are using minikube version greater than 0.24.1
-	// then you have to update the K8s config
-	// We're working to remove this step in upcoming changes.
-	CitfInstance.K8S, err = k8s.NewK8S()
+	// You have to update the K8s config when environment has been set up
+	// this extra step will be unsolicited in upcoming changes.
+	err = CitfInstance.Reload(citfoptions.CreateOptionsIncludeAll(""))
 	Expect(err).NotTo(HaveOccurred())
 
 	// Wait until platform is up
 	time.Sleep(30 * time.Second)
 
-	err = CitfInstance.K8S.YAMLApply("./nginx-pod.yaml")
+	err = CitfInstance.K8S.YAMLApply("./nginx-rc.yaml")
 	Expect(err).NotTo(HaveOccurred())
 
 	// Wait until the pod is up and running
@@ -135,7 +147,7 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 
 	// Tear Down the Platform
-	err = CitfInstance.Environment.Teardown()
+	err := CitfInstance.Environment.Teardown()
 	Expect(err).NotTo(HaveOccurred())
 })
 
@@ -144,6 +156,9 @@ var _ = Describe("Integration Test", func() {
 		It("has `started the controller` in the log", func() {
 			pods, err := CitfInstance.K8S.GetPods("default", "nginx")
 			Expect(err).NotTo(HaveOccurred())
+
+			// Give pods some time to generate logs
+			time.Sleep(2 * time.Second)
 
 			// Assuming that only 1 nginx pod is running
 			for _, v := range pods {
@@ -158,4 +173,33 @@ var _ = Describe("Integration Test", func() {
 ```
 
 Above example is using [Ginkgo](https://github.com/onsi/ginkgo) and [Gomega](https://github.com/onsi/gomega) framework for handling the tests.
+
+`nginx-rc.yaml` which is used in above example is below.
+
+## nginx-rc.yaml
+```yaml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    app: nginx
+  template:
+    metadata:
+      name: nginx
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        args: [/bin/sh, -c,
+            'echo "started the controller"']
+        ports:
+        - containerPort: 80
+```
+> **Note:** Above yaml is compatible with kubernetes 1.9, you may need to modify it if your kubernetes version is different.
+
 </details>

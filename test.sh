@@ -4,7 +4,7 @@
 
 set -e
 echo "" > coverage.txt
-PACKAGES=$(go list ./... | grep -v '/vendor/')
+PACKAGES=$(go list ./... | grep -Ev 'example|/vendor/')
 for d in $PACKAGES; do
 	go test -coverprofile=profile.out -covermode=atomic $d
 	if [ -f profile.out ]; then

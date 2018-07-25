@@ -16,7 +16,6 @@ package k8s
 import (
 	"fmt"
 
-	"github.com/golang/glog"
 	"github.com/openebs/CITF/config"
 	"github.com/openebs/CITF/utils/log"
 	api_core_v1 "k8s.io/api/core/v1"
@@ -37,20 +36,14 @@ type K8S struct {
 
 // NewK8S returns K8S struct
 func NewK8S() (K8S, error) {
-	var config *rest.Config
-	var clientset *kubernetes.Clientset
-	var err error
+	config, err := GetClientConfig()
+	if err != nil {
+		return K8S{}, err
+	}
 
-	// For now we are ignoring this error, as we know with current design
-	// we may end-up trying to create Config even if there is no config present in the machine yet
-	config, err = GetClientConfig()
-	if err == nil {
-		clientset, err = GetClientsetFromConfig(config)
-		if err != nil {
-			return K8S{}, err
-		}
-	} else {
-		glog.Error(err)
+	clientset, err := GetClientsetFromConfig(config)
+	if err != nil {
+		return K8S{}, err
 	}
 
 	return K8S{
