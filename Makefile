@@ -5,7 +5,9 @@ build: vet fmt golint
 # Tools required for different make targets or for development purposes
 EXTERNAL_TOOLS = \
 	github.com/fzipp/gocyclo \
-	golang.org/x/lint/golint
+	golang.org/x/lint/golint \
+	github.com/onsi/ginkgo/ginkgo \
+	github.com/onsi/gomega/...
 
 vet:
 	go list ./... | grep -v "./vendor/*" | xargs go vet
@@ -25,6 +27,9 @@ gocyclo:
 test: vet fmt
 	@echo "--> Running go test";
 	$(PWD)/test.sh
+
+integration-test:
+	go test -v github.com/openebs/CITF/example
 
 # Bootstrap the build by downloading additional tools
 bootstrap:
