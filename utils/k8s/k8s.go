@@ -26,6 +26,7 @@ import (
 	"errors"
 
 	"github.com/golang/glog"
+	"github.com/openebs/CITF/common"
 	strutil "github.com/openebs/CITF/utils/string"
 	sysutil "github.com/openebs/CITF/utils/system"
 	core_v1 "k8s.io/api/core/v1"
@@ -414,7 +415,7 @@ func (k8s K8S) GetDaemonsetStructFromYamlBytes(yamlBytes []byte) (v1beta1.Daemon
 func (k8s K8S) YAMLApply(yamlPath string) error {
 	// TODO: Try using API call first. i.e. Using client-go
 
-	err := sysutil.RunCommand("kubectl apply -f " + yamlPath)
+	err := sysutil.RunCommand(common.Kubectl + " apply -f " + yamlPath)
 	logger.LogErrorf(err, "error occurred while applying the %s", yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed applying %s", yamlPath)
@@ -489,7 +490,7 @@ func (k8s K8S) ExecToPodThroughAPI(command, containerName, podName, namespace st
 // :return: string: Output of the command. (STDOUT)
 //           error: If any error has occurred otherwise `nil`
 func (k8s K8S) ExecToPodThroughKubectl(command, containerName, podName, namespace string) (string, error) {
-	kubectlCommand := "kubectl"
+	kubectlCommand := common.Kubectl
 
 	// adding namespace if namespace is not blank string
 	if len(namespace) != 0 {
@@ -561,7 +562,7 @@ func (k8s K8S) GetLog(podName, namespace string) (string, error) {
 use_kubectl:
 	glog.Errorf("Error while getting log with API call. Error: %+v", err)
 
-	return sysutil.ExecCommand("kubectl -n " + namespace + " logs " + podName)
+	return sysutil.ExecCommand(common.Kubectl + " -n " + namespace + " logs " + podName)
 }
 
 // BlockUntilPodIsUp blocks until all containers of the given pod is ready

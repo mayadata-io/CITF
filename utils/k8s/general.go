@@ -16,8 +16,11 @@ package k8s
 import (
 	"fmt"
 
+	"github.com/golang/glog"
+	"github.com/openebs/CITF/common"
 	"github.com/openebs/CITF/config"
 	"github.com/openebs/CITF/utils/log"
+	sysutil "github.com/openebs/CITF/utils/system"
 	api_core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -32,6 +35,16 @@ var logger log.Logger
 type K8S struct {
 	Config    *rest.Config
 	Clientset *kubernetes.Clientset
+}
+
+func init() {
+	// check if `kubectl` is present
+	kubectlPath, err := sysutil.BinPathFromPathEnv(common.Kubectl)
+	if kubectlPath == "" {
+		// we don't want to exit here because k8s package may be used as a wrapper over client-go as well
+		glog.Errorf("%q not found in current directory or in directories represented by PATH environment variable: %+v", common.Kubectl, err)
+	}
+	glog.Infof("%q found on path: %q", common.Kubectl, kubectlPath)
 }
 
 // NewK8S returns K8S struct
