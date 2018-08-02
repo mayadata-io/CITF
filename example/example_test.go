@@ -18,7 +18,7 @@ func TestIntegrationExample(t *testing.T) {
 	var err error
 	// Initializing CITF without config file.
 	// Also We should not include K8S as currently we don't have kubernetes environment setup
-	CitfInstance, err = citf.NewCITF(citfoptions.CreateOptionsIncludeAllButK8s(""))
+	CitfInstance, err = citf.NewCITF(citfoptions.CreateOptionsIncludeAllButK8s("", GinkgoT()))
 	Expect(err).NotTo(HaveOccurred())
 
 	RunSpecs(t, "Integration Test Suite")
@@ -32,7 +32,7 @@ var _ = BeforeSuite(func() {
 
 	// You have to update the K8s config when environment has been set up
 	// this extra step will be unsolicited in upcoming changes.
-	err = CitfInstance.Reload(citfoptions.CreateOptionsIncludeAll(""))
+	err = CitfInstance.Reload(citfoptions.CreateOptionsIncludeAll("", GinkgoT()))
 	Expect(err).NotTo(HaveOccurred())
 
 	// Wait until platform is up

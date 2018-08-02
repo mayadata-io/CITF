@@ -98,7 +98,7 @@ func (k8s K8S) GetPods(namespace, podNamePrefix string) ([]core_v1.Pod, error) {
 }
 
 // GetPodsUntilQuitSignal returns all the Pods object which has a prefix specified in its name in the given namespace.
-// it tries to get the pods which match the criteria unless `true` recieved from `quit` or it gets at least one such pod.
+// it tries to get the pods which match the criteria unless `true` received from `quit` or it gets at least one such pod.
 // NOTE: it counts pods which are not even in ContainerCreating state yet. Deal with them properly.
 func (k8s K8S) GetPodsUntilQuitSignal(namespace, podNamePrefix string, quit <-chan bool) (thePods []core_v1.Pod, err error) {
 	for {
@@ -108,12 +108,12 @@ func (k8s K8S) GetPodsUntilQuitSignal(namespace, podNamePrefix string, quit <-ch
 				if len(thePods) == 0 {
 					err = fmt.Errorf("failed to get any pod which starts with %q, forced to quit", podNamePrefix)
 				} else {
-					glog.Info("quit signal recieved `true`, quitting...")
+					glog.Info("quit signal received `true`, quitting...")
 					err = nil
 				}
 				return
 			}
-			glog.Info("quit signal recieved `false`, not quitting...")
+			glog.Info("quit signal received `false`, not quitting...")
 
 		default:
 			thePods, err = k8s.GetPods(namespace, podNamePrefix)
@@ -260,7 +260,7 @@ func (k8s K8S) GetContainerStateByIndexInPod(pod *core_v1.Pod, containerIndex in
 		err = fmt.Errorf("pod %q of namespace %q has only %d container(s) but expecting %d containers", pod.Name, pod.Namespace, len(containerStates), containerIndex+1)
 		// inside this block expected number of containers (i. e. containerIndex+1) are always more than one
 		// because control will enter this block only when number of containers is 1 or more than one
-		// but when at least 1 container is present in the pod containerIndex can't be more or equal unless it is atleast 1
+		// but when at least 1 container is present in the pod containerIndex can't be more or equal unless it is at least 1
 		// and when containerIndex is at least one then we are expecting at least 2 containers in the pod (number of containers = containerIndex+1)
 		// thats why in above message I have written containers instead of container(s) for expected number.
 	} else { // if there is enough containers

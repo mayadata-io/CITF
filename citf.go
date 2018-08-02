@@ -75,7 +75,9 @@ func (citfInstance *CITF) Reload(citfCreateOptions *citfoptions.CreateOptions) e
 	}
 
 	if citfCreateOptions.LoggerInclude {
-		citfInstance.Logger = log.Logger{}
+		citfInstance.Logger = log.Logger{
+			T: citfCreateOptions.T,
+		}
 	}
 
 	citfInstance.DebugEnabled = config.Debug()

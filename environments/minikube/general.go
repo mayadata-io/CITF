@@ -36,7 +36,7 @@ func init() {
 	// Check if `minikube` is present
 	minikubePath, err := sysutil.BinPathFromPathEnv(common.Minikube)
 	if minikubePath == "" {
-		logger.LogFatalf(err, "%q not found in current directory or in directories represented by PATH environment variable", common.Minikube)
+		logger.LogTestErrorf(err, "%q not found in current directory or in directories represented by PATH environment variable", common.Minikube)
 	}
 	glog.Infof("%q found on path: %q", common.Minikube, minikubePath)
 
