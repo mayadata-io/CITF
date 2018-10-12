@@ -168,10 +168,10 @@ const (
 	SnapshotNameVTP CloneTLPProperty = "snapshotName"
 	// SourceVolumeTargetIPVTP is source volume target IP
 	SourceVolumeTargetIPVTP CloneTLPProperty = "sourceVolumeTargetIP"
-	// IsCloneVTP is a bool value for clone operations
+	// IsCloneEnableVTP is a bool value for clone operations
 	// for a volume
 	IsCloneEnableVTP CloneTLPProperty = "isCloneEnable"
-	// Name of the source volume
+	// SourceVolumeVTP is the name of the source volume
 	SourceVolumeVTP CloneTLPProperty = "sourceVolume"
 )
 
@@ -179,7 +179,7 @@ const (
 type SnapshotTLPProperty string
 
 const (
-	// VolumeNameSTP is the snapshot name
+	// VolumeSTP is the snapshot name
 	VolumeSTP SnapshotTLPProperty = "volumeName"
 )
 
@@ -205,6 +205,7 @@ const (
 	DataPTP PolicyTLPProperty = "data"
 )
 
+// TaskIdentityPrefix is the constant to find the identity of a task
 const (
 	TaskIdentityPrefix string = "key"
 )
