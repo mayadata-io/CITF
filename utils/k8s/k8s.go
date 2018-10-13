@@ -663,39 +663,39 @@ func (k8s K8S) BlockUntilPodIsUpOrTimeout(pod *core_v1.Pod, timeout time.Duratio
 }
 
 // GetDeployment returns the Deployment object for given deploymentName in the given namespace.
-func (k8s K8S) GetDeployment(namespace, deploymentName string) (*v1beta1.Deployment, error) {
+func (k8s K8S) GetDeployment(namespace, deploymentName string, opts meta_v1.GetOptions) (*v1beta1.Deployment, error) {
 	deploymentClient := k8s.Clientset.ExtensionsV1beta1().Deployments(namespace)
-	return deploymentClient.Get(deploymentName, meta_v1.GetOptions{})
+	return deploymentClient.Get(deploymentName, opts)
 }
 
 // ListDeployments returns a pointer to the DeploymentList containing all the deployments
-func (k8s K8S) ListDeployments(namespace string) (*v1beta1.DeploymentList, error) {
+func (k8s K8S) ListDeployments(namespace string, opts meta_v1.ListOptions) (*v1beta1.DeploymentList, error) {
 	deploymentClient := k8s.Clientset.ExtensionsV1beta1().Deployments(namespace)
-	return deploymentClient.List(meta_v1.ListOptions{})
+	return deploymentClient.List(opts)
 }
 
 // DeleteDeployment deletes the Deployment object of the given deploymentName in the given namespace
-func (k8s K8S) DeleteDeployment(namespace, deploymentName string) (error) {
+func (k8s K8S) DeleteDeployment(namespace, deploymentName string, opts *meta_v1.DeleteOptions) error {
 	deploymentClient := k8s.Clientset.ExtensionsV1beta1().Deployments(namespace)
-	return deploymentClient.Delete(deploymentName, &meta_v1.DeleteOptions{})
+	return deploymentClient.Delete(deploymentName, opts)
 }
 
 // GetStorageClass returns the StorageClass object for given storageClassName.
-func (k8s K8S) GetStorageClass(storageClassName string) (*storage_v1.StorageClass, error) {
+func (k8s K8S) GetStorageClass(storageClassName string, opts meta_v1.GetOptions) (*storage_v1.StorageClass, error) {
 	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
-	return storageClassClient.Get(storageClassName, meta_v1.GetOptions{})
+	return storageClassClient.Get(storageClassName, opts)
 }
 
 // ListStorageClasses returns a pointer to StorageClassList containing all the storage classes
-func (k8s K8S) ListStorageClasses() (*storage_v1.StorageClassList, error) {
+func (k8s K8S) ListStorageClasses(opts meta_v1.ListOptions) (*storage_v1.StorageClassList, error) {
 	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
-	return storageClassClient.List(meta_v1.ListOptions{})
+	return storageClassClient.List(opts)
 }
 
 // DeleteStorageClass deletes the StorageClass object of given storageClassName
-func (k8s K8S) DeleteStorageClass(storageClassName string) error {
+func (k8s K8S) DeleteStorageClass(storageClassName string, opts *meta_v1.DeleteOptions) error {
 	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
-	return storageClassClient.Delete(storageClassName, &meta_v1.DeleteOptions{})
+	return storageClassClient.Delete(storageClassName, opts)
 }
 
 // CreatePersistentVolumeClaim is used to create the PVC in the given namespace
