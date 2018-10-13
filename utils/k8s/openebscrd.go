@@ -43,21 +43,21 @@ func (k8s K8S) DeleteStoragePoolClaim(spcName string) error {
 
 // GetCStorPool returns the CStorPool object for given cStorPoolName.
 // :return: *openebs_v1.CStorPool: Pointer to CStorPool objects.
-func (k8s K8S) GetCStorPool(cStorPoolName string) (*openebs_v1.CStorPool, error) {
+func (k8s K8S) GetCStorPool(cStorPoolName string, opts meta_v1.GetOptions) (*openebs_v1.CStorPool, error) {
 	cStorPoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorPools()
-	return cStorPoolClient.Get(cStorPoolName, meta_v1.GetOptions{})
+	return cStorPoolClient.Get(cStorPoolName, opts)
 }
 
 // ListCStorPool returns all CStorPool objects.
-func (k8s K8S) ListCStorPool() (*openebs_v1.CStorPoolList, error) {
+func (k8s K8S) ListCStorPool(opts meta_v1.ListOptions) (*openebs_v1.CStorPoolList, error) {
 	cStorPoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorPools()
-	return cStorPoolClient.List(meta_v1.ListOptions{})
+	return cStorPoolClient.List(opts)
 }
 
 // DeleteCStorPool deletes a CStorPool with the given name.
-func (k8s K8S) DeleteCStorPool(cStorPoolName string) error {
+func (k8s K8S) DeleteCStorPool(cStorPoolName string, opts *meta_v1.DeleteOptions) error {
 	cStorePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorPools()
-	return cStorePoolClient.Delete(cStorPoolName, &meta_v1.DeleteOptions{})
+	return cStorePoolClient.Delete(cStorPoolName, opts)
 }
 
 // GetStoragePool returns the StoragePool object for the give storagePoolName
