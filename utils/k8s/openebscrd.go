@@ -25,7 +25,7 @@ func (k8s K8S) GetStoragePoolClaim(spcName string) (*openebs_v1.StoragePoolClaim
 	return spcClient.Get(spcName, meta_v1.GetOptions{})
 }
 
-// ListStoragePoolClaims returns all the StoragePoolClaim objects
+// ListStoragePoolClaims returns an object of StoragePoolClaimList
 func (k8s K8S) ListStoragePoolClaims() (*openebs_v1.StoragePoolClaimList, error) {
 	spcCient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
 	return spcCient.List(meta_v1.ListOptions{})
