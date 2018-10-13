@@ -41,8 +41,7 @@ func (k8s K8S) DeleteStoragePoolClaim(spcName string) error {
 	return spcClient.Delete(spcName, &meta_v1.DeleteOptions{})
 }
 
-// GetCStorVolumeReplica returns the CStorVolumeReplica object for given cvrName, namespace.
-// :return: *openebs_v1.CStorVolumeReplica: Pointer to CStorVolumeReplica objects.
+// GetCStorVolumeReplica returns the CStorVolumeReplica object for given cvrName and namespace
 func (k8s K8S) GetCStorVolumeReplica(cvrName, namespace string) (*openebs_v1.CStorVolumeReplica, error) {
 	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
 	return cvrClient.Get(cvrName, meta_v1.GetOptions{})
@@ -54,7 +53,7 @@ func (k8s K8S) ListCStorVolumeReplica(namespace string) (*openebs_v1.CStorVolume
 	return cvrClient.List(meta_v1.ListOptions{})
 }
 
-// DeleteCStorVolumeReplica deletes a CStorVolumeReplica with the given cvrName, namespace
+// DeleteCStorVolumeReplica deletes a CStorVolumeReplica with the given cvrName and namespace
 func (k8s K8S) DeleteCStorVolumeReplica(cvrName, namespace string) error {
 	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
 	return cvrClient.Delete(cvrName, &meta_v1.DeleteOptions{})
