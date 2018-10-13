@@ -30,6 +30,7 @@ import (
 	strutil "github.com/openebs/CITF/utils/string"
 	sysutil "github.com/openebs/CITF/utils/system"
 	core_v1 "k8s.io/api/core/v1"
+	storage_v1 "k8s.io/api/storage/v1"
 	"k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -677,4 +678,22 @@ func (k8s K8S) ListDeployments(namespace string) (*v1beta1.DeploymentList, error
 func (k8s K8S) DeleteDeployment(namespace, deploymentName string) (error) {
 	deploymentClient := k8s.Clientset.ExtensionsV1beta1().Deployments(namespace)
 	return deploymentClient.Delete(deploymentName, &meta_v1.DeleteOptions{})
+}
+
+// GetStorageClass returns the StorageClass object for given storageClassName.
+func (k8s K8S) GetStorageClass(storageClassName string) (*storage_v1.StorageClass, error) {
+	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
+	return storageClassClient.Get(storageClassName, meta_v1.GetOptions{})
+}
+
+// ListStorageClasses returns a pointer to StorageClassList containing all the storage classes
+func (k8s K8S) ListStorageClasses() (*storage_v1.StorageClassList, error) {
+	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
+	return storageClassClient.List(meta_v1.ListOptions{})
+}
+
+// DeleteStorageClass deletes the StorageClass object of given storageClassName
+func (k8s K8S) DeleteStorageClass(storageClassName string) (error) {
+	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
+	return storageClassClient.Delete(storageClassName, &meta_v1.DeleteOptions{})
 }
