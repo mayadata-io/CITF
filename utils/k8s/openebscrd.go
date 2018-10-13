@@ -60,6 +60,6 @@ func (k8s K8S) ListCStorPool() ([]openebs_v1.CStorPool, error) {
 
 // DeleteCStorPool deletes a CStorPool with the given name.
 func (k8s K8S) DeleteCStorPool(cStorPoolName string) error {
-	cStorePoolClient := k8s.OpenebsClientSet().Openebs().CStorePools()
+	cStorePoolClient := k8s.OpenebsClientSet.Openebs().CStorePools()
 	return cStorePoolClient.Delete(cStorPoolName, &meta_v1.DeleteOptions{})
 }
