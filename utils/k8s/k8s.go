@@ -30,6 +30,7 @@ import (
 	strutil "github.com/openebs/CITF/utils/string"
 	sysutil "github.com/openebs/CITF/utils/system"
 	core_v1 "k8s.io/api/core/v1"
+	storage_v1 "k8s.io/api/storage/v1"
 	"k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -659,4 +660,40 @@ func (k8s K8S) BlockUntilPodIsUpOrTimeout(pod *core_v1.Pod, timeout time.Duratio
 	defer cancel()
 
 	return k8s.BlockUntilPodIsUpWithContext(ctx, pod)
+}
+
+// GetStorageClass returns the StorageClass object for given storageClassName.
+func (k8s K8S) GetStorageClass(storageClassName string) (*storage_v1.StorageClass, error) {
+	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
+	return storageClassClient.Get(storageClassName, meta_v1.GetOptions{})
+}
+
+// ListStorageClasses returns all the StorageClass object which has a prefix specified in its name.
+// it tries to get the StorageClass which match the criteria only once.
+func (k8s K8S) ListStorageClasses(storageClassPrefex string) ([]storage_v1.StorageClass, error) {
+	var theStorageClasses []storage_v1.StorageClass
+
+	// List pods
+	storageClasses, err := k8s.Clientset.StorageV1().StorageClasses().List(meta_v1.ListOptions{})
+	if err != nil {
+		return theStorageClasses, err
+	}
+
+	// Find the Pod
+	logger.PrintlnDebugMessage(strings.Repeat("*", 80))
+	for _, storageClass := range storageClasses.Items {
+		logger.PrintlnDebugMessage("complete StorageClass name is:", storageClass.Name)
+		if strings.HasPrefix(storageClass.Name, storageClassPrefex) {
+			theStorageClasses = append(theStorageClasses, storageClass)
+		}
+	}
+	logger.PrintlnDebugMessage(strings.Repeat("*", 80))
+
+	return theStorageClasses, err
+}
+
+// DeleteStorageClass deletes the StorageClass object for given storageClassName.
+func (k8s K8S) DeleteStorageClass(storageClassName string) (error) {
+	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
+	return storageClassClient.Delete(storageClassName, &meta_v1.DeleteOptions{})
 }
