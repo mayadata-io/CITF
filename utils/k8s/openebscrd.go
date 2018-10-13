@@ -21,22 +21,18 @@ import (
 // GetStoragePoolClaim returns the StoragePoolClaim object for given spcName.
 // :return: *openebs_v1.StoragePoolClaim: Pointer to StoragePoolClaim objects.
 func (k8s K8S) GetStoragePoolClaim(spcName string) (*openebs_v1.StoragePoolClaim, error) {
-	spcClient := k8s.OpenebsClientSet.Openebs().StoragePoolClaims()
+	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
 	return spcClient.Get(spcName, meta_v1.GetOptions{})
 }
 
 // ListStoragePoolClaims returns all the StoragePoolClaim objects
-func (k8s K8S) ListStoragePoolClaims() ([]openebs_v1.StoragePoolClaim, error) {
-	spcCient := k8s.OpenebsClientSet.Openebs().StoragePoolClaims()
-	spcs, err := spcCient.List(meta_v1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return spcs.Items, nil
+func (k8s K8S) ListStoragePoolClaims() (*openebs_v1.StoragePoolClaimList, error) {
+	spcCient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
+	return spcCient.List(meta_v1.ListOptions{})
 }
 
 // DeleteStoragePoolClaim deletes a StoragePoolClaim with the given name
 func (k8s K8S) DeleteStoragePoolClaim(spcName string) error {
-	spcClient := k8s.OpenebsClientSet.Openebs().StoragePoolClaims()
+	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
 	return spcClient.Delete(spcName, &meta_v1.DeleteOptions{})
 }
