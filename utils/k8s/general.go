@@ -19,6 +19,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/openebs/CITF/common"
 	"github.com/openebs/CITF/config"
+	openebs "github.com/openebs/CITF/pkg/client/clientset/versioned"
 	"github.com/openebs/CITF/utils/log"
 	sysutil "github.com/openebs/CITF/utils/system"
 	api_core_v1 "k8s.io/api/core/v1"
@@ -33,8 +34,9 @@ var logger log.Logger
 
 // K8S is a struct which will be the driver for all the methods related to kubernetes
 type K8S struct {
-	Config    *rest.Config
-	Clientset *kubernetes.Clientset
+	Config           *rest.Config
+	Clientset        *kubernetes.Clientset
+	OpenebsClientSet *openebs.Clientset
 }
 
 func init() {
@@ -59,9 +61,15 @@ func NewK8S() (K8S, error) {
 		return K8S{}, err
 	}
 
+	openebsClientSet, err := openebs.NewForConfig(config)
+	if err != nil {
+		return K8S{}, err
+	}
+
 	return K8S{
-		Config:    config,
-		Clientset: clientset,
+		Config:           config,
+		Clientset:        clientset,
+		OpenebsClientSet: openebsClientSet,
 	}, nil
 }
 
