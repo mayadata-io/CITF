@@ -668,31 +668,13 @@ func (k8s K8S) GetStorageClass(storageClassName string) (*storage_v1.StorageClas
 	return storageClassClient.Get(storageClassName, meta_v1.GetOptions{})
 }
 
-// ListStorageClasses returns all the StorageClass object which has a prefix specified in its name.
-// it tries to get the StorageClass which match the criteria only once.
-func (k8s K8S) ListStorageClasses(storageClassPrefex string) ([]storage_v1.StorageClass, error) {
-	var theStorageClasses []storage_v1.StorageClass
-
-	// List pods
-	storageClasses, err := k8s.Clientset.StorageV1().StorageClasses().List(meta_v1.ListOptions{})
-	if err != nil {
-		return theStorageClasses, err
-	}
-
-	// Find the Pod
-	logger.PrintlnDebugMessage(strings.Repeat("*", 80))
-	for _, storageClass := range storageClasses.Items {
-		logger.PrintlnDebugMessage("complete StorageClass name is:", storageClass.Name)
-		if strings.HasPrefix(storageClass.Name, storageClassPrefex) {
-			theStorageClasses = append(theStorageClasses, storageClass)
-		}
-	}
-	logger.PrintlnDebugMessage(strings.Repeat("*", 80))
-
-	return theStorageClasses, err
+// ListStorageClasses returns a pointer to StorageClassList containing all the storage classes
+func (k8s K8S) ListStorageClasses() (*storage_v1.StorageClassList, error) {
+	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
+	return storageClassClient.List(meta_v1.ListOptions{})
 }
 
-// DeleteStorageClass deletes the StorageClass object for given storageClassName.
+// DeleteStorageClass deletes the StorageClass object of given storageClassName
 func (k8s K8S) DeleteStorageClass(storageClassName string) (error) {
 	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
 	return storageClassClient.Delete(storageClassName, &meta_v1.DeleteOptions{})
