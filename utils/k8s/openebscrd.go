@@ -45,11 +45,11 @@ func (k8s K8S) DeleteStoragePoolClaim(spcName string) error {
 // :return: *openebs_v1.CStorPool: Pointer to CStorPool objects.
 func (k8s K8S) GetCStorPool(cStorPoolName string) (*openebs_v1.CStorPool, error) {
 	cStorPoolClient := k8s.OpenebsClientSet.Openebs().CStorPool()
-	return cStorPoolClient.Get(meta_v1.GetOptions{})
+	return cStorPoolClient.Get(cStorPoolName, meta_v1.GetOptions{})
 }
 
 // ListCStorPool returns all CStorPool objects.
-func (k8s K8S) ListCStorPool(namespace) ([]openebs_v1.CStorPool, error) {
+func (k8s K8S) ListCStorPool() ([]openebs_v1.CStorPool, error) {
 	cStorPoolClient := k8s.OpenebsClientSet.Openebs().CStorPool()
 	cStorPools, err := cStorPoolClient.List(meta_v1.ListOptions{})
 	if err != nil {
