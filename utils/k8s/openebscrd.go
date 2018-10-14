@@ -74,13 +74,13 @@ func (k8s K8S) DeleteStoragePool(storagePoolName string, opts *meta_v1.DeleteOpt
 	return storagePoolClient.Delete(storagePoolName, opts)
 }
 
-// GetDisk returns the Disk object for the give disk name
+// GetDisk returns the Disk object for the given disk name
 func (k8s K8S) GetDisk(diskName string, opts meta_v1.GetOptions) (*openebs_v1.Disk, error) {
 	diskClient := k8s.OpenebsClientSet.OpenebsV1alpha1()
 	return diskClient.Disks().Get(diskName, opts)
 }
 
-// ListDisks list All the Disk objects
+// ListDisks list all the Disk objects
 func (k8s K8S) ListDisks(opts meta_v1.ListOptions) (*openebs_v1.DiskList, error) {
 	diskClient := k8s.OpenebsClientSet.OpenebsV1alpha1()
 	return diskClient.Disks().List(opts)
