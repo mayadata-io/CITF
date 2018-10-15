@@ -18,15 +18,13 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// CreateStoragePoolClaim takes the representation of a storagePoolClaim and creates it.
-// :return *openebs_v1.StoragePoolClaim: Pointer to StoragePoolClaim object.
+// CreateStoragePoolClaim takes StoragePoolClaim as an argument and creates it.
 func (k8s K8S) CreateStoragePoolClaim(storagePoolClaim *openebs_v1.StoragePoolClaim) (*openebs_v1.StoragePoolClaim, error) {
 	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
 	return spcClient.Create(storagePoolClaim)
 }
 
 // GetStoragePoolClaim returns the StoragePoolClaim object for given spcName.
-// :return: *openebs_v1.StoragePoolClaim: Pointer to StoragePoolClaim object.
 func (k8s K8S) GetStoragePoolClaim(spcName string, opts meta_v1.GetOptions) (*openebs_v1.StoragePoolClaim, error) {
 	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
 	return spcClient.Get(spcName, opts)
