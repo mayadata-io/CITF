@@ -92,20 +92,26 @@ func (k8s K8S) DeleteDisk(diskName string, opts *meta_v1.DeleteOptions) error {
 	return diskClient.Disks().Delete(diskName, opts)
 }
 
-// GetCStorVolumeReplica returns the CStorVolumeReplica object for given CStorVolumeReplicaName and namespace
+// CreateCStoreVolumeReplica creats CStoreVolumeReplica for given CStoreVolumeReplica object and namespace.
+func (k8s K8S) CreateCStoreVolumeReplica(namespace string, cStorVolumeReplicas *openebs_v1.CStorVolumeReplica) (*openebs_v1.CStorVolumeReplica, error) {
+	cStorVolumeReplicaClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
+	return cStorVolumeReplicaClient.Create(cStorVolumeReplicas)
+}
+
+// GetCStorVolumeReplica returns the CStorVolumeReplica object for given CStorVolumeReplicaName and namespace.
 func (k8s K8S) GetCStorVolumeReplica(cvrName, namespace string, opts meta_v1.GetOptions) (*openebs_v1.CStorVolumeReplica, error) {
-	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
-	return cvrClient.Get(cvrName, opts)
+	cStorVolumeReplicaClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
+	return cStorVolumeReplicaClient.Get(cvrName, opts)
 }
 
-// ListCStorVolumeReplica returns all the CStorVolumeReplicaList for given namespace
+// ListCStorVolumeReplica returns all the CStorVolumeReplicaList for given namespace.
 func (k8s K8S) ListCStorVolumeReplica(namespace string, opts meta_v1.ListOptions) (*openebs_v1.CStorVolumeReplicaList, error) {
-	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
-	return cvrClient.List(opts)
+	cStorVolumeReplicaClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
+	return cStorVolumeReplicaClient.List(opts)
 }
 
-// DeleteCStorVolumeReplica deletes a CStorVolumeReplica with the given CStorVolumeReplicaName and namespace
+// DeleteCStorVolumeReplica deletes a CStorVolumeReplica with the given CStorVolumeReplicaName and namespace.
 func (k8s K8S) DeleteCStorVolumeReplica(cvrName, namespace string, opts *meta_v1.DeleteOptions) error {
-	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
-	return cvrClient.Delete(cvrName, opts)
+	cStorVolumeReplicaClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
+	return cStorVolumeReplicaClient.Delete(cvrName, opts)
 }
