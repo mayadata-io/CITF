@@ -56,6 +56,12 @@ func (k8s K8S) DeleteCStorPool(cStorPoolName string, opts *meta_v1.DeleteOptions
 	return cStorePoolClient.Delete(cStorPoolName, opts)
 }
 
+// CreateCStorPool creates the CStorPool and returns it.
+func (k8s K8S) CreateCStorPool(cStorPool *openebs_v1.CStorPool) (*openebs_v1.CStorPool, error) {
+	cStorePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorPools()
+	return cStorePoolClient.Create(cStorPool)
+}
+
 // GetStoragePool returns the StoragePool object for the give storagePoolName
 func (k8s K8S) GetStoragePool(storagePoolName string, opts meta_v1.GetOptions) (*openebs_v1.StoragePool, error) {
 	storagePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePools()
