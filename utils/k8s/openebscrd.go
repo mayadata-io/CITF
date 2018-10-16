@@ -18,27 +18,37 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// CreateStoragePoolClaim takes StoragePoolClaim as an argument and creates it.
+func (k8s K8S) CreateStoragePoolClaim(storagePoolClaim *openebs_v1.StoragePoolClaim) (*openebs_v1.StoragePoolClaim, error) {
+	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
+	return spcClient.Create(storagePoolClaim)
+}
+
 // GetStoragePoolClaim returns the StoragePoolClaim object for given spcName.
-// :return: *openebs_v1.StoragePoolClaim: Pointer to StoragePoolClaim objects.
 func (k8s K8S) GetStoragePoolClaim(spcName string, opts meta_v1.GetOptions) (*openebs_v1.StoragePoolClaim, error) {
 	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
 	return spcClient.Get(spcName, opts)
 }
 
-// ListStoragePoolClaims returns an object of StoragePoolClaimList
+// ListStoragePoolClaims returns an object of StoragePoolClaimList.
 func (k8s K8S) ListStoragePoolClaims(opts meta_v1.ListOptions) (*openebs_v1.StoragePoolClaimList, error) {
 	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
 	return spcClient.List(opts)
 }
 
-// DeleteStoragePoolClaim deletes a StoragePoolClaim with the given name
+// DeleteStoragePoolClaim deletes a StoragePoolClaim with the given name.
 func (k8s K8S) DeleteStoragePoolClaim(spcName string, opts *meta_v1.DeleteOptions) error {
 	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
 	return spcClient.Delete(spcName, opts)
 }
 
+// CreateCStorPool creates the CStorPool and returns it.
+func (k8s K8S) CreateCStorPool(cStorPool *openebs_v1.CStorPool) (*openebs_v1.CStorPool, error) {
+	cStorePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorPools()
+	return cStorePoolClient.Create(cStorPool)
+}
+
 // GetCStorPool returns the CStorPool object for given cStorPoolName.
-// :return: *openebs_v1.CStorPool: Pointer to CStorPool objects.
 func (k8s K8S) GetCStorPool(cStorPoolName string, opts meta_v1.GetOptions) (*openebs_v1.CStorPool, error) {
 	cStorPoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorPools()
 	return cStorPoolClient.Get(cStorPoolName, opts)
@@ -62,19 +72,19 @@ func (k8s K8S) CreateStoragePool(storagePool *openebs_v1.StoragePool) (*openebs_
 	return storagePoolClient.Create(storagePool)
 }
 
-// GetStoragePool returns the StoragePool object for the give storagePoolName
+// GetStoragePool returns the StoragePool object for the given storagePoolName.
 func (k8s K8S) GetStoragePool(storagePoolName string, opts meta_v1.GetOptions) (*openebs_v1.StoragePool, error) {
 	storagePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePools()
 	return storagePoolClient.Get(storagePoolName, opts)
 }
 
-// ListStoragePool returns all the StoragePool objects
+// ListStoragePool returns all the StoragePool objects.
 func (k8s K8S) ListStoragePool(opts meta_v1.ListOptions) (*openebs_v1.StoragePoolList, error) {
 	storagePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePools()
 	return storagePoolClient.List(opts)
 }
 
-// DeleteStoragePool deletes a StoragePool object with the given storagePoolName
+// DeleteStoragePool deletes a StoragePool object with the given storagePoolName.
 func (k8s K8S) DeleteStoragePool(storagePoolName string, opts *meta_v1.DeleteOptions) error {
 	storagePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePools()
 	return storagePoolClient.Delete(storagePoolName, opts)
