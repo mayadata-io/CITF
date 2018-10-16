@@ -108,7 +108,7 @@ func (k8s K8S) DeleteDisk(diskName string, opts *meta_v1.DeleteOptions) error {
 	return diskClient.Disks().Delete(diskName, opts)
 }
 
-// CreateCStoreVolumeReplica creats CStoreVolumeReplica for given CStoreVolumeReplica object and namespace.
+// CreateCStoreVolumeReplica creates CStoreVolumeReplica for given CStoreVolumeReplica object and namespace.
 func (k8s K8S) CreateCStoreVolumeReplica(namespace string, cStorVolumeReplicas *openebs_v1.CStorVolumeReplica) (*openebs_v1.CStorVolumeReplica, error) {
 	cStorVolumeReplicaClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
 	return cStorVolumeReplicaClient.Create(cStorVolumeReplicas)
