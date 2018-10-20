@@ -680,6 +680,12 @@ func (k8s K8S) DeleteDeployment(namespace, deploymentName string, opts *meta_v1.
 	return deploymentClient.Delete(deploymentName, opts)
 }
 
+// CreateStorageClass creates the StorageClass.
+func (k8s K8S) CreateStorgeClass(storageClass *storage_v1.StorageClass) (*storage_v1.StorageClass, error) {
+	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
+	return storageClassClient.Create(storageClass)
+}
+
 // GetStorageClass returns the StorageClass object for given storageClassName.
 func (k8s K8S) GetStorageClass(storageClassName string, opts meta_v1.GetOptions) (*storage_v1.StorageClass, error) {
 	storageClassClient := k8s.Clientset.StorageV1().StorageClasses()
