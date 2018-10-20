@@ -722,7 +722,7 @@ func (k8s K8S) DeletePersistentVolumeClaim(namespace, persistentVolumeClaimName 
 	return persistentVolumeClaimClient.Delete(persistentVolumeClaimName, opts)
 }
 
-// GetPersistentVolume returns the PersistentVolume object for the give persistentVolumeName
+// GetPersistentVolume returns the PersistentVolume object for the given persistentVolumeName
 func (k8s K8S) GetPersistentVolume(persistentVolumeName string, opts meta_v1.GetOptions) (*core_v1.PersistentVolume, error) {
 	persistentVolumesClient := k8s.Clientset.CoreV1().PersistentVolumes()
 	return persistentVolumesClient.Get(persistentVolumeName, opts)
