@@ -18,31 +18,37 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// CreateStoragePoolClaim takes StoragePoolClaim as an argument and creates it.
+func (k8s K8S) CreateStoragePoolClaim(storagePoolClaim *openebs_v1.StoragePoolClaim) (*openebs_v1.StoragePoolClaim, error) {
+	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
+	return spcClient.Create(storagePoolClaim)
+}
+
 // GetStoragePoolClaim returns the StoragePoolClaim object for given spcName.
-// :return: *openebs_v1.StoragePoolClaim: Pointer to StoragePoolClaim objects.
-func (k8s K8S) GetStoragePoolClaim(spcName string) (*openebs_v1.StoragePoolClaim, error) {
-	spcClient := k8s.OpenebsClientSet.Openebs().StoragePoolClaims()
-	return spcClient.Get(spcName, meta_v1.GetOptions{})
+func (k8s K8S) GetStoragePoolClaim(spcName string, opts meta_v1.GetOptions) (*openebs_v1.StoragePoolClaim, error) {
+	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
+	return spcClient.Get(spcName, opts)
 }
 
-// ListStoragePoolClaims returns all the StoragePoolClaim objects
-func (k8s K8S) ListStoragePoolClaims() ([]openebs_v1.StoragePoolClaim, error) {
-	spcCient := k8s.OpenebsClientSet.Openebs().StoragePoolClaims()
-	spcs, err := spcCient.List(meta_v1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return spcs.Items, nil
+// ListStoragePoolClaims returns an object of StoragePoolClaimList.
+func (k8s K8S) ListStoragePoolClaims(opts meta_v1.ListOptions) (*openebs_v1.StoragePoolClaimList, error) {
+	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
+	return spcClient.List(opts)
 }
 
-// DeleteStoragePoolClaim deletes a StoragePoolClaim with the given name
-func (k8s K8S) DeleteStoragePoolClaim(spcName string) error {
-	spcClient := k8s.OpenebsClientSet.Openebs().StoragePoolClaims()
-	return spcClient.Delete(spcName, &meta_v1.DeleteOptions{})
+// DeleteStoragePoolClaim deletes a StoragePoolClaim with the given name.
+func (k8s K8S) DeleteStoragePoolClaim(spcName string, opts *meta_v1.DeleteOptions) error {
+	spcClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePoolClaims()
+	return spcClient.Delete(spcName, opts)
+}
+
+// CreateCStorPool creates the CStorPool and returns it.
+func (k8s K8S) CreateCStorPool(cStorPool *openebs_v1.CStorPool) (*openebs_v1.CStorPool, error) {
+	cStorePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorPools()
+	return cStorePoolClient.Create(cStorPool)
 }
 
 // GetCStorPool returns the CStorPool object for given cStorPoolName.
-// :return: *openebs_v1.CStorPool: Pointer to CStorPool objects.
 func (k8s K8S) GetCStorPool(cStorPoolName string, opts meta_v1.GetOptions) (*openebs_v1.CStorPool, error) {
 	cStorPoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorPools()
 	return cStorPoolClient.Get(cStorPoolName, opts)
@@ -60,38 +66,68 @@ func (k8s K8S) DeleteCStorPool(cStorPoolName string, opts *meta_v1.DeleteOptions
 	return cStorePoolClient.Delete(cStorPoolName, opts)
 }
 
-// GetStoragePool returns the StoragePool object for the give storagePoolName
+// CreateStoragePool takes the representation of a StoragePool and creates it.
+func (k8s K8S) CreateStoragePool(storagePool *openebs_v1.StoragePool) (*openebs_v1.StoragePool, error) {
+	storagePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePools()
+	return storagePoolClient.Create(storagePool)
+}
+
+// GetStoragePool returns the StoragePool object for the given storagePoolName.
 func (k8s K8S) GetStoragePool(storagePoolName string, opts meta_v1.GetOptions) (*openebs_v1.StoragePool, error) {
 	storagePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePools()
 	return storagePoolClient.Get(storagePoolName, opts)
 }
 
-// ListStoragePool returns all the StoragePool objects
+// ListStoragePool returns all the StoragePool objects.
 func (k8s K8S) ListStoragePool(opts meta_v1.ListOptions) (*openebs_v1.StoragePoolList, error) {
 	storagePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePools()
 	return storagePoolClient.List(opts)
 }
 
-// DeleteStoragePool deletes a StoragePool object with the given storagePoolName
+// DeleteStoragePool deletes a StoragePool object with the given storagePoolName.
 func (k8s K8S) DeleteStoragePool(storagePoolName string, opts *meta_v1.DeleteOptions) error {
 	storagePoolClient := k8s.OpenebsClientSet.OpenebsV1alpha1().StoragePools()
 	return storagePoolClient.Delete(storagePoolName, opts)
 }
 
-// ListDisks list All disks
-func (k8s K8S) ListDisks() (*openebs_v1.DiskList, error) {
+// GetDisk returns the Disk object for the given disk name
+func (k8s K8S) GetDisk(diskName string, opts meta_v1.GetOptions) (*openebs_v1.Disk, error) {
 	diskClient := k8s.OpenebsClientSet.OpenebsV1alpha1()
-	return diskClient.Disks().List(meta_v1.ListOptions{})
+	return diskClient.Disks().Get(diskName, opts)
 }
 
-// GetDisk Gets disk with diskname
-func (k8s K8S) GetDisk(diskName string) (*openebs_v1.Disk, error) {
+// ListDisks list all the Disk objects
+func (k8s K8S) ListDisks(opts meta_v1.ListOptions) (*openebs_v1.DiskList, error) {
 	diskClient := k8s.OpenebsClientSet.OpenebsV1alpha1()
-	return diskClient.Disks().Get(diskName, meta_v1.GetOptions{})
+	return diskClient.Disks().List(opts)
 }
 
-// DeleteDisk deletes disk with diskname
-func (k8s K8S) DeleteDisk(diskName string) error {
+// DeleteDisk deletes a Disk object with the given diskname
+func (k8s K8S) DeleteDisk(diskName string, opts *meta_v1.DeleteOptions) error {
 	diskClient := k8s.OpenebsClientSet.OpenebsV1alpha1()
-	return diskClient.Disks().Delete(diskName, &meta_v1.DeleteOptions{})
+	return diskClient.Disks().Delete(diskName, opts)
+}
+
+// GetCStorVolumeReplica returns the CStorVolumeReplica object for given CStorVolumeReplicaName and namespace
+func (k8s K8S) GetCStorVolumeReplica(cvrName, namespace string, opts meta_v1.GetOptions) (*openebs_v1.CStorVolumeReplica, error) {
+	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
+	return cvrClient.Get(cvrName, opts)
+}
+
+// ListCStorVolumeReplica returns all the CStorVolumeReplicaList for given namespace
+func (k8s K8S) ListCStorVolumeReplica(namespace string, opts meta_v1.ListOptions) (*openebs_v1.CStorVolumeReplicaList, error) {
+	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
+	return cvrClient.List(opts)
+}
+
+// DeleteCStorVolumeReplica deletes a CStorVolumeReplica with the given CStorVolumeReplicaName and namespace
+func (k8s K8S) DeleteCStorVolumeReplica(cvrName, namespace string, opts *meta_v1.DeleteOptions) error {
+	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
+	return cvrClient.Delete(cvrName, opts)
+}
+
+// ListCStorVolume list volume 
+func (k8s K8S) ListCStorVolume(namespace string, opts meta_v1.ListOptions) (*openebs_v1.CStorVolumeList, error) {
+	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumes(namespace)
+	return cvrClient.List(opts)
 }
