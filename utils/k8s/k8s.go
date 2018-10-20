@@ -662,6 +662,12 @@ func (k8s K8S) BlockUntilPodIsUpOrTimeout(pod *core_v1.Pod, timeout time.Duratio
 	return k8s.BlockUntilPodIsUpWithContext(ctx, pod)
 }
 
+// CreateDeployment creates the Deployment in the given namespace.
+func (k8s K8S) CreateDeployment(namespace string, deployment *v1beta1.Deployment) (*v1beta1.Deployment, error) {
+	deploymentClient := k8s.Clientset.ExtensionsV1beta1().Deployments(namespace)
+	return deploymentClient.Create(deployment);
+}
+
 // GetDeployment returns the Deployment object for given deploymentName in the given namespace.
 func (k8s K8S) GetDeployment(namespace, deploymentName string, opts meta_v1.GetOptions) (*v1beta1.Deployment, error) {
 	deploymentClient := k8s.Clientset.ExtensionsV1beta1().Deployments(namespace)
