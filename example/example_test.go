@@ -34,6 +34,9 @@ var _ = BeforeSuite(func() {
 	// this extra step will be unsolicited in upcoming changes.
 	err = CitfInstance.Reload(citfoptions.CreateOptionsIncludeAll(""))
 	Expect(err).NotTo(HaveOccurred())
+	Expect(CitfInstance.K8S.Config).NotTo(BeNil())
+	Expect(CitfInstance.K8S.Clientset).NotTo(BeNil())
+	Expect(CitfInstance.K8S.OpenebsClientSet).NotTo(BeNil())
 
 	// Wait until platform is up
 	time.Sleep(30 * time.Second)
