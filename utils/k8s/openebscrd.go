@@ -125,3 +125,9 @@ func (k8s K8S) DeleteCStorVolumeReplica(cvrName, namespace string, opts *meta_v1
 	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumeReplicas(namespace)
 	return cvrClient.Delete(cvrName, opts)
 }
+
+// ListCStorVolume list volume 
+func (k8s K8S) ListCStorVolume(namespace string, opts meta_v1.ListOptions) (*openebs_v1.CStorVolumeList, error) {
+	cvrClient := k8s.OpenebsClientSet.OpenebsV1alpha1().CStorVolumes(namespace)
+	return cvrClient.List(opts)
+}
