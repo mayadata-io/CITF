@@ -41,15 +41,15 @@ required = [
 
 [[constraint]]
   name = "k8s.io/api"
-  version = "kubernetes-1.11.0"
+  version = "kubernetes-1.12.3"
 
 [[constraint]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.11.0"
+  version = "kubernetes-1.12.3"
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "8.0.0"
+  version = "kubernetes-1.12.3"
 
 # Apply workaround from https://github.com/golang/dep/issues/1799
 [[override]]
